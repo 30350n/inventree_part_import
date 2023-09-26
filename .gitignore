@@ -1,0 +1,8 @@
+.history/
+.vscode/
+__pycache__
+
+Pipfile
+Pipfile.lock
+
+dist/

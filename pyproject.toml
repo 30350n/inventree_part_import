@@ -1,0 +1,35 @@
+[project]
+name = "inventree-part-import"
+version = "0.1.0"
+description = "CLI to import parts from suppliers like DigiKey, LCSC, Mouser, etc. to InvenTree"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+authors = [
+  { name = "Bobbe", email = "mail@30350n.de" },
+]
+dependencies = [
+  "beautifulsoup4",
+  "click",
+  "cutie",
+  "digikey-api>=1.0",
+  "fake-useragent",
+  "inventree>=0.12",
+  "isocodes",
+  "mouser>=0.1.5",
+  "platformdirs",
+  "pyyaml",
+  "requests",
+  "tablib",
+  "thefuzz",
+]
+
+[project.urls]
+Homepage = "https://github.com/30350n/inventree_part_import"
+
+[project.scripts]
+inventree-part-import = "inventree_part_import.cli:inventree_part_import"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
