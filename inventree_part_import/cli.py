@@ -10,9 +10,9 @@ from .config import setup_inventree_api, CONFIG_DIR
 from .error_helper import *
 from . import error_helper
 from .part_importer import PartImporter
-from .suppliers import setup_supplier_companies, SUPPLIER_MODULES
+from .suppliers import setup_supplier_companies, get_supplier_classes
 
-SupplierChoices = click.Choice(SUPPLIER_MODULES)
+SupplierChoices = click.Choice(get_supplier_classes().keys())
 
 @click.command()
 @click.argument("inputs", nargs=-1)
@@ -97,7 +97,7 @@ def load_tabular_data(path: Path):
             if sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
                 column_index = headers[sorted_headers[0]]
             else:
-                info("select column to import")
+                print("\nselect the column to import:")
                 index = select(sorted_headers, deselected_prefix="  ", selected_prefix="> ")
                 column_index = headers[sorted_headers[index]]
 

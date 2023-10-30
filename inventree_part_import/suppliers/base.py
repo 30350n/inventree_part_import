@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from inspect import _empty
+import inspect
 import re
 
 from ..config import get_pre_creation_hooks
@@ -55,6 +57,24 @@ class ApiPart:
         if self.quantity_available:
             data["available"] = min(float(self.quantity_available), 9999999.0)
         return data
+
+class Supplier:
+    def setup(self):
+        pass
+
+    def _get_setup_params(self):
+        return {
+            name: parameter.default if parameter.default is not _empty else None
+            for name, parameter in inspect.signature(self.setup).parameters.items()
+            if name != "self"
+        }
+
+    def search(self, search_term: str) -> [ApiPart]:
+        raise NotImplementedError()
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
 def money2float(money):
     money = MONEY2FLOAT_CLEANUP.sub("", money).strip()

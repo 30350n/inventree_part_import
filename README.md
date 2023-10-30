@@ -37,6 +37,27 @@ It has two parameters:
 - `host`: the host url to connect to (including port, if required)
 - `token`: the user token to authentificate with (this will be retrieved automatically by the CLI)
 
+#### `config.yaml`
+
+This file is used to configure general settings of the CLI tool, aswell as default locales.
+The following parameters have to be set:
+
+- `currency`: the default currency to use when searching suppliers (ISO4217 code)
+- `language`: the defautl language to use when searching suppliers (ISO639 code)
+- `location`: the default location to use when searching suppliers (ISO3166 code)
+- `scrape`: whether or not web page scraping is allowed (this can get you temporarily blocked)
+
+#### `suppliers.yaml`
+
+This file is used to configure supplier specific behavior.
+The following parameters are always available:
+
+- `currency`: overrides the currency for searching this supplier (see [`config.yaml`](#configyaml))
+- `language`: overrides the language for searching this supplier (see [`config.yaml`](#configyaml))
+- `location`: overrides the location for searching this supplier (see [`config.yaml`](#configyaml))
+
+Additionally suppliers can have extra parameters for authentifcation to their respective APIs.
+
 #### `categories.yaml`
 
 TODO ...
