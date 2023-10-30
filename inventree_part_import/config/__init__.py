@@ -190,7 +190,7 @@ def load_suppliers_config(suppliers: dict[str, Supplier]):
 
     return suppliers_out
 
-def update_supplier_config(supplier: Supplier, supplier_config: dict):
+def update_supplier_config(supplier: Supplier, supplier_config: dict, force_update=False):
     global_config = get_config()
     used_global_settings = {}
 
@@ -201,7 +201,7 @@ def update_supplier_config(supplier: Supplier, supplier_config: dict):
         else:
             new_supplier_config[name] = supplier_config.get(name, param_default)
 
-    if None in new_supplier_config.values():
+    if force_update or None in new_supplier_config.values():
         if new_supplier_config:
             prompt(f"\nsetup {supplier.name} configuration:", end="\n")
             for name, default in new_supplier_config.items():

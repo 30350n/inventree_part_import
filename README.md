@@ -57,6 +57,7 @@ The following parameters are always available:
 - `location`: overrides the location for searching this supplier (see [`config.yaml`](#configyaml))
 
 Additionally suppliers can have extra parameters for authentifcation to their respective APIs.
+These can be set via the CLI like so: `inventree_part_import --configure <supplier>`.
 
 #### `categories.yaml`
 

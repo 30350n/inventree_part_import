@@ -6,7 +6,8 @@ from tablib import import_set
 from tablib.exceptions import UnsupportedFormat, TablibException
 from thefuzz import fuzz
 
-from .config import setup_inventree_api, CONFIG_DIR
+from .config import setup_inventree_api, update_supplier_config, update_config_file
+from .config import CONFIG_DIR, SUPPLIERS_CONFIG
 from .error_helper import *
 from . import error_helper
 from .part_importer import PartImporter
@@ -20,24 +21,38 @@ def handle_keyboard_interrupt(func):
             error("Aborting Execution! (KeyboardInterrupt)", prefix="")
     return wrapper
 
-_suppliers, _ = get_suppliers()
+_suppliers, _available_suppliers = get_suppliers()
 SuppliersChoices = click.Choice(_suppliers.keys())
+AvailableSuppliersChoices = click.Choice(_available_suppliers.keys())
 
 @click.command
 @click.argument("inputs", nargs=-1)
 @click.option("-s", "--supplier", type=SuppliersChoices, help="Search this supplier first.")
 @click.option("-o", "--only", type=SuppliersChoices, help="Only search this supplier.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
-@click.option("--config", is_flag=True, help="Show path to config directory and exit.")
-def inventree_part_import(inputs, config=False, supplier=None, only=None, verbose=False):
+@click.option("--config-dir", is_flag=True, help="Show path to config directory and exit.")
+@click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
 @handle_keyboard_interrupt
+def inventree_part_import(
+    inputs, supplier=None, only=None, verbose=False, config_dir=False, configure=None,
+):
     """Import supplier parts into InvenTree.
 
     INPUTS can either be supplier part numbers OR paths to tabular data files.
     """
 
-    if config:
+    if config_dir:
         print(CONFIG_DIR)
+        return
+    
+    if configure:
+        _, available_suppliers = get_suppliers()
+        supplier = available_suppliers[configure]
+        with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
+            supplier_config = config if (config := suppliers_config.get(configure)) else {}
+            new_config = update_supplier_config(supplier, supplier_config, force_update=True)
+            if new_config:
+                suppliers_config[configure] = new_config
         return
 
     if not inputs:
