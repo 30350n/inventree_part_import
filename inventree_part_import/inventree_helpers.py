@@ -1,19 +1,19 @@
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-import requests
-from requests.compat import urlparse
-from tempfile import gettempdir
 
 from inventree.api import InvenTreeAPI
 from inventree.base import ImageMixin, InventreeObject
 from inventree.company import Company as InventreeCompany, ManufacturerPart, SupplierPart
 from inventree.part import Part, ParameterTemplate
+from platformdirs import user_cache_path
+import requests
+from requests.compat import urlparse
 
 from .error_helper import *
 
-TEMPDIR = Path(gettempdir()) / "inventree_temp"
-TEMPDIR.mkdir(parents=True, exist_ok=True)
+INVENTREE_CACHE = user_cache_path(__package__, ensure_exists=True) / "inventree"
+INVENTREE_CACHE.mkdir(parents=True, exist_ok=True)
 
 def get_supplier_part(inventree_api: InventreeCompany, sku):
     supplier_parts = SupplierPart.list(inventree_api, SKU=sku)
@@ -77,7 +77,7 @@ def download_image_content(api_object: ImageMixin):
     if not api_object.image:
         return b""
 
-    api_image_path = TEMPDIR / f"api_image.{api_object.image.rsplit('.')[-1]}"
+    api_image_path = INVENTREE_CACHE / f"api_image.{api_object.image.rsplit('.')[-1]}"
     api_image_path.unlink(missing_ok=True)
     api_object.downloadImage(str(api_image_path))
 
@@ -99,7 +99,7 @@ def upload_image(api_object: ImageMixin, image_url: str):
         warning(f"failed to get file extension for image from '{image_url}'")
         return
 
-    image_path = TEMPDIR / f"temp_image.{file_extension}"
+    image_path = INVENTREE_CACHE / f"temp_image.{file_extension}"
     with open(image_path, "wb") as file:
         file.write(image_content)
 
