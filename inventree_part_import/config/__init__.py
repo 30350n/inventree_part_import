@@ -24,10 +24,10 @@ CONFIG_DIR = user_config_path(parent_package, ensure_exists=True)
 TEMPLATE_DIR = Path(__file__).parent
 
 # if someone decides to create a git repository in the CONFIG_DIR,
-# stop them from leaking their InvenTree host configuration
+# stop them from leaking their api keys
 _gitignore = CONFIG_DIR / ".gitignore"
 if not _gitignore.exists():
-    _gitignore.write_text("inventree.yaml\n", encoding="utf-8")
+    _gitignore.write_text("inventree.yaml\nsuppliers.yaml\n", encoding="utf-8")
 
 INVENTREE_CONFIG = CONFIG_DIR / "inventree.yaml"
 def setup_inventree_api():
