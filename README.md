@@ -66,6 +66,29 @@ TODO ...
 
 TODO ...
 
+#### Pre Creation Hooks (`hooks.py`)
+
+Pre creation hooks are functions that get run after part information has been parsed from a
+supplier, but before the InvenTree part gets created. They basically let you modify a part,
+before it gets imported. This can be very useful in some cases.
+
+For example, here's one that assigns transistors into different categories, based on their type:
+
+```py
+def fix_transistor_categories(api_part):
+    if "BJT" in api_part.category_path[-1] or "Bipolar (BJT)" in api_part.category_path:
+        transistor_type = api_part.parameters.get("Transistor Type", "")
+        if "NPN" in transistor_type:
+            api_part.category_path.append("NPN")
+        elif "PNP" in transistor_type:
+            api_part.category_path.append("PNP")
+```
+
+You can define any number of them in a `hooks.py` file in your configuration directory.
+They'll get called in the order they're defined in.
+
+For more examples, checkout my [config repository](https://github.com/30350n/inventree_part_import_config).
+
 ## Goal
 
 The goal of this project is to not exist anymore in it's current form. Ideally everything the

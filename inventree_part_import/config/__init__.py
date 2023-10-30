@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import importlib.util
 from pathlib import Path
 import shutil
+import sys
 from typing import TYPE_CHECKING
 
 from cutie import prompt_yes_or_no, secure_input, select_multiple
@@ -198,8 +200,30 @@ def update_supplier_config(supplier: Supplier, supplier_config: dict):
 
     return new_supplier_config
 
+HOOKS_CONFIG = CONFIG_DIR / "hooks.py"
+_PRE_CREATION_HOOKS = None
 def get_pre_creation_hooks():
-    return []
+    global _PRE_CREATION_HOOKS
+    if _PRE_CREATION_HOOKS is not None:
+        return _PRE_CREATION_HOOKS
+
+    _PRE_CREATION_HOOKS = []
+    if not HOOKS_CONFIG.is_file():
+        return _PRE_CREATION_HOOKS
+
+    info("loading pre creation hooks ...")
+    try:
+        hooks_spec = importlib.util.spec_from_file_location(HOOKS_CONFIG.stem, HOOKS_CONFIG)
+        hooks_module = importlib.util.module_from_spec(hooks_spec)
+        sys.modules[HOOKS_CONFIG.stem] = hooks_module
+        hooks_spec.loader.exec_module(hooks_module)
+    except ImportError as e:
+        error(f"failed to load '{HOOKS_CONFIG.name}' with {e}")
+        return _PRE_CREATION_HOOKS
+
+    _PRE_CREATION_HOOKS = [hook for hook in vars(hooks_module).values() if callable(hook)]
+    success(f"loaded {len(_PRE_CREATION_HOOKS)} pre creation hooks!")
+    return _PRE_CREATION_HOOKS
 
 def input_currency(prompt="currency"):
     while True:
