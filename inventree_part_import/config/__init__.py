@@ -48,9 +48,9 @@ def setup_inventree_api():
     inventree_api = None
     while not inventree_api:
         print("setup your InvenTree API connection:")
-        host = input("host: ")
-        username = input("username: ")
-        password = secure_input("password:")
+        host = input("host: ").strip()
+        username = input("username: ").strip()
+        password = secure_input("password:").strip()
         try:
             inventree_api = InvenTreeAPI(
                 host, username=username, password=password, use_token_auth=True,
@@ -227,21 +227,21 @@ def get_pre_creation_hooks():
 
 def input_currency(prompt="currency"):
     while True:
-        currency = input(f"{prompt}: ").upper()
+        currency = input(f"{prompt}: ").upper().strip()
         if currencies.get(alpha_3=currency):
             return currency
         error(f"'{currency}' is not a valid ISO 4217 currency code")
 
 def input_language(prompt="language"):
     while True:
-        language = input(f"{prompt}: ").lower()
+        language = input(f"{prompt}: ").lower().strip()
         if languages.get(alpha_2=language) or languages.get(alpha_3=language):
             return language
         error(f"'{language}' is not a valid ISO 639-2 language code")
 
 def input_location(prompt="location"):
     while True:
-        location = input(f"{prompt}: ").upper()
+        location = input(f"{prompt}: ").upper().strip()
         if countries.get(alpha_2=location) or countries.get(alpha_3=location):
             return location
         error(f"'{location}' is not a valid ISO 3166 country code")
@@ -249,7 +249,7 @@ def input_location(prompt="location"):
 def input_default(prompt, default_value=None):
     suffix = "" if default_value is None else f" [{default_value}]"
     while True:
-        value = input(f"{prompt}{suffix}: ")
+        value = input(f"{prompt}{suffix}: ").strip()
         if value or default_value:
             return value or default_value
 
