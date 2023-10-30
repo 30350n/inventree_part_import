@@ -236,7 +236,7 @@ def input_language(prompt="language"):
     while True:
         language = input(f"{prompt}: ").lower().strip()
         if languages.get(alpha_2=language) or languages.get(alpha_3=language):
-            return language
+            return language.upper()
         error(f"'{language}' is not a valid ISO 639-2 language code")
 
 def input_location(prompt="location"):

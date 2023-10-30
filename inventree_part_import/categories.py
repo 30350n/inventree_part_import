@@ -2,7 +2,9 @@ from dataclasses import dataclass, field
 
 from inventree.part import PartCategory, ParameterTemplate, PartCategoryParameterTemplate
 
-from .config import *
+from .config import (
+    get_categories_config, get_parameters_config, CATEGORIES_CONFIG, PARAMETERS_CONFIG,
+)
 from .error_helper import *
 
 def setup_categories_and_parameters(inventree_api):
