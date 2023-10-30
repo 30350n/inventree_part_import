@@ -13,10 +13,11 @@ def search(search_term, supplier_id: str = None, only_supplier=False):
     global _SUPPLIERS
     if _SUPPLIERS is None:
         assert _SUPPLIER_COMPANIES is not None, "call setup_supplier_companies(...) first"
-        assert _SUPPLIER_OBJECTS.keys() == _SUPPLIER_COMPANIES.keys()
+        supplier_objects, _ = get_suppliers()
+        assert supplier_objects.keys() == _SUPPLIER_COMPANIES.keys()
         _SUPPLIERS = dict(zip(
-            _SUPPLIER_OBJECTS.keys(),
-            zip(_SUPPLIER_OBJECTS.values(), _SUPPLIER_COMPANIES.values())
+            supplier_objects.keys(),
+            zip(supplier_objects.values(), _SUPPLIER_COMPANIES.values())
         ))
 
     suppliers = list(_SUPPLIERS.values())
@@ -54,15 +55,15 @@ def setup_supplier_companies(inventree_api):
             supplier_config["_primary_key"] = api_company.pk
             _SUPPLIER_COMPANIES[id] = api_company
 
-AVAILABLE_SUPPLIERS = None
 _SUPPLIER_OBJECTS = None
-def get_supplier_classes():
-    global AVAILABLE_SUPPLIERS, _SUPPLIER_OBJECTS
+_AVAILABLE_SUPPLIER_OBJECTS = None
+def get_suppliers() -> (dict, dict):
+    global _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS
     if _SUPPLIER_OBJECTS is not None:
-        return _SUPPLIER_OBJECTS
-    _SUPPLIER_OBJECTS = {}
+        return _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS
 
-    available_suppliers = {}
+    _SUPPLIER_OBJECTS = {}
+    _AVAILABLE_SUPPLIER_OBJECTS = {}
     for path in Path(__file__).parent.glob("supplier_*.py"):
         module_name = path.stem
         try:
@@ -84,13 +85,11 @@ def get_supplier_classes():
             continue
 
         id = module_name.split("supplier_", 1)[-1]
-        available_suppliers[id] = supplier_classes[0]()
+        _AVAILABLE_SUPPLIER_OBJECTS[id] = supplier_classes[0]()
 
-    loaded_suppliers = load_suppliers_config(available_suppliers)
+    _SUPPLIER_OBJECTS = load_suppliers_config(_AVAILABLE_SUPPLIER_OBJECTS)
 
-    if (available := len(available_suppliers)) > (loaded := len(loaded_suppliers)):
-        hint(f"only loaded {loaded} of {available} available supplier modules")
+    if (available := len(_AVAILABLE_SUPPLIER_OBJECTS)) > (loaded := len(_SUPPLIER_OBJECTS)):
+        hint(f"only {loaded} of {available} available supplier modules are configured")
 
-    AVAILABLE_SUPPLIERS = list(available_suppliers.keys())
-    _SUPPLIER_OBJECTS = loaded_suppliers
-    return _SUPPLIER_OBJECTS
+    return _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS

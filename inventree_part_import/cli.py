@@ -10,9 +10,7 @@ from .config import setup_inventree_api, CONFIG_DIR
 from .error_helper import *
 from . import error_helper
 from .part_importer import PartImporter
-from .suppliers import setup_supplier_companies, get_supplier_classes
-
-SupplierChoices = click.Choice(get_supplier_classes().keys())
+from .suppliers import setup_supplier_companies, get_suppliers
 
 def handle_keyboard_interrupt(func):
     def wrapper(*args, **kwargs):
@@ -22,10 +20,13 @@ def handle_keyboard_interrupt(func):
             error("Aborting Execution! (KeyboardInterrupt)", prefix="")
     return wrapper
 
+_suppliers, _ = get_suppliers()
+SuppliersChoices = click.Choice(_suppliers.keys())
+
 @click.command
 @click.argument("inputs", nargs=-1)
-@click.option("-s", "--supplier", type=SupplierChoices, help="Search this supplier first.")
-@click.option("-o", "--only", type=SupplierChoices, help="Only search this supplier.")
+@click.option("-s", "--supplier", type=SuppliersChoices, help="Search this supplier first.")
+@click.option("-o", "--only", type=SuppliersChoices, help="Only search this supplier.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
 @click.option("--config", is_flag=True, help="Show path to config directory and exit.")
 def inventree_part_import(inputs, config=False, supplier=None, only=None, verbose=False):
