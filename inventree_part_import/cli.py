@@ -14,15 +14,24 @@ from .suppliers import setup_supplier_companies, get_supplier_classes
 
 SupplierChoices = click.Choice(get_supplier_classes().keys())
 
-@click.command()
+def handle_keyboard_interrupt(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except KeyboardInterrupt:
+            error("Aborting Execution! (KeyboardInterrupt)", prefix="")
+    return wrapper
+
+@click.command
 @click.argument("inputs", nargs=-1)
 @click.option("-s", "--supplier", type=SupplierChoices, help="Search this supplier first.")
 @click.option("-o", "--only", type=SupplierChoices, help="Only search this supplier.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
 @click.option("--config", is_flag=True, help="Show path to config directory and exit.")
 def inventree_part_import(inputs, config=False, supplier=None, only=None, verbose=False):
+@handle_keyboard_interrupt
     """Import supplier parts into InvenTree.
-    
+
     INPUTS can either be supplier part numbers OR paths to tabular data files.
     """
 
@@ -77,7 +86,6 @@ def inventree_part_import(inputs, config=False, supplier=None, only=None, verbos
         success("imported all parts!")
 
 MPN_HEADERS = ("Manufacturer Part Number", "MPN")
-
 def load_tabular_data(path: Path):
     info(f"reading {path.name} ...")
     with path.open() as file:
@@ -97,7 +105,7 @@ def load_tabular_data(path: Path):
             if sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
                 column_index = headers[sorted_headers[0]]
             else:
-                print("\nselect the column to import:")
+                prompt("\nselect the column to import:", end="\n")
                 index = select(sorted_headers, deselected_prefix="  ", selected_prefix="> ")
                 column_index = headers[sorted_headers[index]]
 

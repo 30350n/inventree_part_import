@@ -47,10 +47,11 @@ def setup_inventree_api():
 
     inventree_api = None
     while not inventree_api:
-        print("setup your InvenTree API connection:")
-        host = input("host: ").strip()
-        username = input("username: ").strip()
-        password = secure_input("password:").strip()
+        prompt("setup your InvenTree API connection:", end="\n")
+        host = prompt_input("host")
+        username = prompt_input("username")
+        prompt("password:", end="")
+        password = secure_input("").strip()
         try:
             inventree_api = InvenTreeAPI(
                 host, username=username, password=password, use_token_auth=True,
@@ -77,16 +78,16 @@ def get_config():
             return _CONFIG_LOADED
         except MarkedYAMLError as e:
             error(e, prefix="")
-            exit(-1)
+            sys.exit(1)
 
     info(f"failed to find {CONFIG.name} config file", end="\n")
-    print_new_configuration_hint()
+    new_configuration_hint()
 
-    print("\nsetup your default configuration:")
+    prompt("\nsetup your default configuration:", end="\n")
     currency = input_currency()
     language = input_language()
     location = input_location()
-    print("do you want to enable web scraping? (this is required to use some suppliers)")
+    prompt("do you want to enable web scraping? (this is required by some suppliers)", end="\n")
     warning("enabling scraping can get you temporarily blocked sometimes")
     scraping = prompt_yes_or_no("enable scraping?", default_is_yes=True)
 
@@ -112,7 +113,7 @@ def get_parameters_config():
 def _get_config_file(config_path: Path):
     if not config_path.is_file():
         info(f"failed to find {config_path.name} config file", end="\n")
-        print_new_configuration_hint()
+        new_configuration_hint()
         if prompt_yes_or_no("copy the default configuration file?", default_is_yes=True):
             shutil.copy(TEMPLATE_DIR / config_path.name, config_path)
         else:
@@ -140,10 +141,13 @@ SUPPLIERS_CONFIG = CONFIG_DIR / "suppliers.yaml"
 def load_suppliers_config(suppliers: dict[str, Supplier]):
     if not SUPPLIERS_CONFIG.is_file():
         info(f"failed to find {SUPPLIERS_CONFIG.name} config file", end="\n")
-        print_new_configuration_hint()
+        new_configuration_hint()
 
         suppliers_config = {}
-        print("\nselect the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)")
+        prompt(
+            "\nselect the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)",
+            end="\n",
+        )
         selection = select_multiple(
             [supplier.name for supplier in suppliers.values()],
             ticked_indices=list(range(len(suppliers))),
@@ -175,7 +179,7 @@ def load_suppliers_config(suppliers: dict[str, Supplier]):
                     warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG.name}'")
     except MarkedYAMLError as e:
         error(e, prefix="")
-        exit(-1)
+        sys.exit(1)
 
     return suppliers_out
 
@@ -227,21 +231,21 @@ def get_pre_creation_hooks():
 
 def input_currency(prompt="currency"):
     while True:
-        currency = input(f"{prompt}: ").upper().strip()
+        currency = prompt_input(prompt).upper()
         if currencies.get(alpha_3=currency):
             return currency
         error(f"'{currency}' is not a valid ISO 4217 currency code")
 
 def input_language(prompt="language"):
     while True:
-        language = input(f"{prompt}: ").lower().strip()
+        language = prompt_input(prompt).lower()
         if languages.get(alpha_2=language) or languages.get(alpha_3=language):
             return language.upper()
         error(f"'{language}' is not a valid ISO 639-2 language code")
 
 def input_location(prompt="location"):
     while True:
-        location = input(f"{prompt}: ").upper().strip()
+        location = prompt_input(prompt).upper()
         if countries.get(alpha_2=location) or countries.get(alpha_3=location):
             return location
         error(f"'{location}' is not a valid ISO 3166 country code")
@@ -249,12 +253,12 @@ def input_location(prompt="location"):
 def input_default(prompt, default_value=None):
     suffix = "" if default_value is None else f" [{default_value}]"
     while True:
-        value = input(f"{prompt}{suffix}: ").strip()
+        value = prompt_input(f"{prompt}{suffix}")
         if value or default_value:
             return value or default_value
 
 NEW_CONFIGURATION_HINT = True
-def print_new_configuration_hint():
+def new_configuration_hint():
     global NEW_CONFIGURATION_HINT
     if NEW_CONFIGURATION_HINT:
         hint("this is normal if you're using this program for the first time")
