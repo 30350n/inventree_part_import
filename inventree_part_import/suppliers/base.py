@@ -59,7 +59,7 @@ class ApiPart:
         return data
 
 class Supplier:
-    def setup(self):
+    def setup(self) -> bool:
         pass
 
     def _get_setup_params(self):

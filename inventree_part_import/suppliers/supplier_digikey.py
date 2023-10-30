@@ -24,6 +24,8 @@ class DigiKey(Supplier):
 
         logging.getLogger("digikey.v3.api").setLevel(logging.CRITICAL)
 
+        return True
+
     def search(self, search_term):
         digikey_part = digikey.product_details(
             search_term,

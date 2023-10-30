@@ -161,8 +161,10 @@ def load_suppliers_config(suppliers: dict[str, Supplier]):
         suppliers_out = {}
         supplier_ids = list(suppliers.keys())
         for id in (supplier_ids[index] for index in selection):
-            suppliers_config[id] = update_supplier_config(suppliers[id], {})
-            suppliers_out[id] = suppliers[id]
+            new_supplier_config = update_supplier_config(suppliers[id], {})
+            if new_supplier_config is not None:
+                suppliers_config[id] = new_supplier_config
+                suppliers_out[id] = suppliers[id]
 
         yaml_data = yaml.safe_dump(suppliers_config, indent=4, sort_keys=False)
         SUPPLIERS_CONFIG.write_text(yaml_data, encoding="utf-8")
@@ -173,9 +175,13 @@ def load_suppliers_config(suppliers: dict[str, Supplier]):
     try:
         with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
             for id, supplier_config in suppliers_config.items():
+                if supplier_config is None:
+                    continue
                 if supplier := suppliers.get(id):
-                    suppliers_config[id] = update_supplier_config(supplier, supplier_config)
-                    suppliers_out[id] = supplier
+                    new_supplier_config = update_supplier_config(supplier, supplier_config)
+                    if new_supplier_config is not None:
+                        suppliers_config[id] = new_supplier_config
+                        suppliers_out[id] = supplier
                 else:
                     warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG.name}'")
     except MarkedYAMLError as e:
@@ -196,14 +202,16 @@ def update_supplier_config(supplier: Supplier, supplier_config: dict):
             new_supplier_config[name] = supplier_config.get(name, param_default)
 
     if None in new_supplier_config.values():
-        print(f"\nsetup {supplier.name} configuration:")
-        for name, default in new_supplier_config.items():
-            new_supplier_config[name] = input_default(name, default)
+        if new_supplier_config:
+            prompt(f"\nsetup {supplier.name} configuration:", end="\n")
+            for name, default in new_supplier_config.items():
+                new_supplier_config[name] = input_default(name, default)
         success(f"setup {supplier.name} configuration!")
 
-    supplier.setup(**new_supplier_config, **used_global_settings)
+    if not supplier.setup(**new_supplier_config, **used_global_settings):
+        return None
 
-    return new_supplier_config
+    return {**supplier_config, **new_supplier_config}
 
 HOOKS_CONFIG = CONFIG_DIR / "hooks.py"
 _PRE_CREATION_HOOKS = None

@@ -2,6 +2,7 @@ import re
 from requests import Session
 
 from .base import ApiPart, Supplier
+from ..error_helper import *
 from .scrape import scrape, REQUEST_TIMEOUT
 
 API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
@@ -11,10 +12,15 @@ PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
 class LCSC(Supplier):
     def setup(self, currency):
+        if not currency in CURRENCY_MAP.values():
+            error(f"failed to load '{self.name}' module (unsupported currency '{currency}')")
+            return False
+
         self.currency = currency
+        return True
 
     def search(self, search_term):
-        setup = self.get_setup_hook()
+        setup = self.setup_hook
         if not (search_result := scrape(SEARCH_URL.format(search_term), setup_hook=setup)):
             return [], 0
 
@@ -105,10 +111,8 @@ class LCSC(Supplier):
             currency=currency,
         )
 
-    def get_setup_hook(self):
-        def setup_hook(session: Session):
-            session.get(CURRENCY_URL.format(self.currency), timeout=REQUEST_TIMEOUT)
-        return setup_hook
+    def setup_hook(self, session: Session):
+        session.get(CURRENCY_URL.format(self.currency), timeout=REQUEST_TIMEOUT)
 
 REMOVE_HTML_TAGS = re.compile(r"<.*?>")
 
