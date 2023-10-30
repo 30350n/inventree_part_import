@@ -6,6 +6,7 @@ from inventree.part import Part, Parameter
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
 
 from .categories import setup_categories_and_parameters, CATEGORIES_CONFIG
+from .config import get_pre_creation_hooks
 from .error_helper import *
 from .inventree_helpers import (
     create_manufacturer, get_parameter_templates, get_part, get_manufacturer_part,
@@ -22,6 +23,10 @@ class ImportResult(Enum):
 class PartImporter:
     def __init__(self, inventree_api):
         self.api = inventree_api
+
+        # preload pre_creation_hooks
+        get_pre_creation_hooks()
+
         self.category_map, self.parameter_map = setup_categories_and_parameters(self.api)
         self.parameter_templates = get_parameter_templates(self.api)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import importlib.util
+from inspect import isfunction
 from pathlib import Path
 import shutil
 import sys
@@ -225,7 +226,7 @@ def get_pre_creation_hooks():
         error(f"failed to load '{HOOKS_CONFIG.name}' with {e}")
         return _PRE_CREATION_HOOKS
 
-    _PRE_CREATION_HOOKS = [hook for hook in vars(hooks_module).values() if callable(hook)]
+    _PRE_CREATION_HOOKS = [hook for hook in vars(hooks_module).values() if isfunction(hook)]
     success(f"loaded {len(_PRE_CREATION_HOOKS)} pre creation hooks!")
     return _PRE_CREATION_HOOKS
 
