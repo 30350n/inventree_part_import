@@ -31,19 +31,19 @@ $ inventree_part_import parts.csv
 
 #### `inventree.yaml`
 
-This file is used to configure authentification to your InvenTree host.
+This file is used to configure authentication to your InvenTree host.
 It has two parameters:
 
 - `host`: the host url to connect to (including port, if required)
-- `token`: the user token to authentificate with (this will be retrieved automatically by the CLI)
+- `token`: the user token to authenticate with (this will be retrieved automatically by the CLI)
 
 #### `config.yaml`
 
-This file is used to configure general settings of the CLI tool, aswell as default locales.
+This file is used to configure general settings of the CLI tool, as well as default locales.
 The following parameters have to be set:
 
 - `currency`: the default currency to use when searching suppliers (ISO4217 code)
-- `language`: the defautl language to use when searching suppliers (ISO639 code)
+- `language`: the default language to use when searching suppliers (ISO639 code)
 - `location`: the default location to use when searching suppliers (ISO3166 code)
 - `scrape`: whether or not web page scraping is allowed (this can get you temporarily blocked)
 
@@ -92,15 +92,15 @@ For more examples, checkout my [config repository](https://github.com/30350n/inv
 
 ## Goal
 
-The goal of this project is to not exist anymore in it's current form. Ideally everything the
-CLI tool does would be directly available from the InvenTree web interface. This will most
+The end goal of this project is to not exist anymore in it's current form. Ideally everything
+the CLI tool does would be directly available from the InvenTree web interface. This will most
 likely be done by implementing plugins which offer the required functionality for each supplier.
 
 ## Credits
 
 - [InvenTree](https://inventree.org/) ([@SchrodingersGat](https://github.com/SchrodingersGat) and [@matmair](https://github.com/matmair))
   This project wouldn't exist without their brilliant work on creating the awesome open-source
-  inventory managment solution.
+  inventory management solution.
 
 - [Ki-nTree](https://github.com/sparkmicro/Ki-nTree) ([@eeintech](https://github.com/eeintech))
   This project is inspired by Ki-nTree and aims to fix most of the issues I've had with it.
