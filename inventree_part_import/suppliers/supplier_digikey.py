@@ -57,9 +57,9 @@ class DigiKey(Supplier):
             digikey_part for digikey_part in filtered_results
             if digikey_part.manufacturer_part_number.lower() == search_term.lower()
         ]
-        if len(exact_matches) == 1:
+        if exact_matches:
             filtered_results = exact_matches
-            product_count = 1
+            product_count = len(exact_matches)
 
         return list(map(self.get_api_part, filtered_results)), product_count
 

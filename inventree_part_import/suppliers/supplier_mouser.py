@@ -32,7 +32,7 @@ class Mouser(Supplier):
                 part for part in filtered_matches
                 if part.get("ManufacturerPartNumber", "").lower() == search_term.lower()
             ]
-            if len(exact_matches) == 1:
+            if exact_matches:
                 filtered_matches = exact_matches
 
             return list(map(self.get_api_part, filtered_matches)), len(filtered_matches)

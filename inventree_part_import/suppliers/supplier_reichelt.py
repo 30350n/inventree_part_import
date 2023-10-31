@@ -104,8 +104,8 @@ class Reichelt(Supplier):
             if api_part.SKU.lower() == search_term.lower()
             or api_part.MPN.lower() == search_term.lower()
         ]
-        if len(exact_matches) == 1:
-            return exact_matches, 1
+        if exact_matches:
+            return exact_matches, len(exact_matches)
 
         return api_parts, len(api_parts)
 

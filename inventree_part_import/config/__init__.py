@@ -96,7 +96,7 @@ def get_config():
         "currency": currency,
         "language": language,
         "location": location,
-        "scraping": scraping
+        "scraping": scraping,
     }
     with CONFIG.open("w", encoding="utf-8") as file:
         yaml.safe_dump(_CONFIG_LOADED, file, sort_keys=False)

@@ -69,7 +69,7 @@ class Supplier:
             if name != "self"
         }
 
-    def search(self, search_term: str) -> [ApiPart]:
+    def search(self, search_term: str) -> ([ApiPart], int):
         raise NotImplementedError()
 
     @property
