@@ -154,29 +154,37 @@ class Category:
     parameters: list[str] = field(default_factory=list)
     part_category: PartCategory = None
 
+CATEGORY_ATTRIBUTES = {"_parameters", "_description", "_ignore", "_structural", "_aliases"}
 def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
     categories = {}
-    for key, value in categories_dict.items():
-        if key.startswith("_"):
+    for name, values in categories_dict.items():
+        if name.startswith("_"):
             continue
 
-        if value is None:
-            value = {}
+        if values is None:
+            values = {}
+        elif not isinstance(values, dict):
+            warning(f"failed to parse category '{name}' (invalid type, should be dict or null)")
+            continue
 
-        new_parameters = parameters + tuple(value.get("_parameters", []))
-        new_path = path + (key,)
+        for child in values.keys():
+            if child.startswith("_") and not child in CATEGORY_ATTRIBUTES:
+                warning(f"ignoring unknown special attribute '{child}' in category '{name}'")
+
+        new_parameters = parameters + tuple(values.get("_parameters", []))
+        new_path = path + (name,)
 
         categories[new_path] = Category(
-            name=key,
+            name=name,
             path=list(new_path),
-            description=value.get("_description", key),
-            ignore=value.get("_ignore", False),
-            structural=value.get("_structural", False),
-            aliases=value.get("_aliases", []),
+            description=values.get("_description", name),
+            ignore=values.get("_ignore", False),
+            structural=values.get("_structural", False),
+            aliases=values.get("_aliases", []),
             parameters=new_parameters,
         )
 
-        categories.update(parse_category_recursive(value, new_parameters, new_path))
+        categories.update(parse_category_recursive(values, new_parameters, new_path))
 
     return categories
 
@@ -187,18 +195,23 @@ class Parameter:
     aliases: list[str]
     units: str
 
+PARAMETER_ATTRIBUTES = {"_description", "_aliases", "_unit"}
 def parse_parameters(parameters_dict):
     parameters = {}
-    for parameter, values in parameters_dict.items():
-        if parameter.startswith("_"):
-            continue
-
+    for name, values in parameters_dict.items():
         if values is None:
             values = {}
+        elif not isinstance(values, dict):
+            warning(f"failed to parse parameter '{name}' (invalid type, should be dict or null)")
+            continue
 
-        parameters[parameter] = Parameter(
-            name=parameter,
-            description=values.get("_description", parameter),
+        for child in values.keys():
+            if child.startswith("_") and not child in PARAMETER_ATTRIBUTES:
+                warning(f"ignoring unknown special attribute '{child}' in parameter '{name}'")
+
+        parameters[name] = Parameter(
+            name=name,
+            description=values.get("_description", name),
             aliases=values.get("_aliases", []),
             units=values.get("_unit", ""),
         )
