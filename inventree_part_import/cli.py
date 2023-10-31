@@ -75,9 +75,11 @@ def inventree_part_import(
             parts += file_parts
         elif path.exists():
             warning(f"skipping '{path}' (path exists, but is not a file)")
-        elif part := name.strip():
-            parts.append(part)
-    
+        else:
+            parts.append(name)
+
+    parts = list(filter(bool, (part.strip() for part in parts)))
+
     if not parts:
         info("nothing to import.")
         return
