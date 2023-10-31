@@ -135,6 +135,9 @@ class TMEApi:
         if not product_symbols:
             return []
 
+        # this api call only supports up to 50 symbols
+        product_symbols = product_symbols[:50]
+
         data = {
             "Country": self.country,
             "Language": self.language,
