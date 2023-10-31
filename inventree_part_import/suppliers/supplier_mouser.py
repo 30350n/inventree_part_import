@@ -4,9 +4,9 @@ from types import MethodType
 from bs4 import BeautifulSoup
 from mouser.api import MouserPartSearchRequest
 
-from .base import ApiPart, Supplier, money2float
-from .scrape import scrape, DOMAIN_REGEX, DOMAIN_SUB
 from ..error_helper import *
+from .base import ApiPart, Supplier, money2float
+from .scrape import DOMAIN_REGEX, DOMAIN_SUB, scrape
 
 class Mouser(Supplier):
     def setup(self, api_key, currency, scraping, locale_url="www.mouser.com"):
@@ -23,14 +23,15 @@ class Mouser(Supplier):
         search_request.part_search(search_term)
 
         if parts := search_request.get_response()["SearchResults"]["Parts"]:
+            search_term_lower = search_term.lower()
             filtered_matches = [
                 part for part in parts
-                if part.get("ManufacturerPartNumber", "").lower().startswith(search_term.lower())
+                if part.get("ManufacturerPartNumber", "").lower().startswith(search_term_lower)
             ]
 
             exact_matches = [
                 part for part in filtered_matches
-                if part.get("ManufacturerPartNumber", "").lower() == search_term.lower()
+                if part.get("ManufacturerPartNumber", "").lower() == search_term_lower
             ]
             if exact_matches:
                 filtered_matches = exact_matches

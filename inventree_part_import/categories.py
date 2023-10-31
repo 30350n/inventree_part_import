@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
 
-from inventree.part import PartCategory, ParameterTemplate, PartCategoryParameterTemplate
+from inventree.part import ParameterTemplate, PartCategory, PartCategoryParameterTemplate
 
-from .config import (
-    get_categories_config, get_parameters_config, CATEGORIES_CONFIG, PARAMETERS_CONFIG,
-)
+from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config,
+                     get_parameters_config)
 from .error_helper import *
 
 def setup_categories_and_parameters(inventree_api):
@@ -22,7 +21,7 @@ def setup_categories_and_parameters(inventree_api):
         if parameter not in parameters:
             error(f"parameter '{parameter}' not defined in {PARAMETERS_CONFIG.name}")
             return None, None
-        if not parameter in used_parameters:
+        if parameter not in used_parameters:
             warning(f"parameter '{parameter}' is defined, but not being used")
 
     part_categories = {
@@ -73,7 +72,7 @@ def setup_categories_and_parameters(inventree_api):
 
     for parameter in parameters.values():
         description, units = parameter.description, parameter.units
-        
+
         if not (parameter_template := parameter_templates.get(parameter.name)):
             info(f"creating parameter template '{parameter.name}' ...")
             parameter_templates[parameter.name] = ParameterTemplate.create(inventree_api, {
@@ -105,7 +104,7 @@ def setup_categories_and_parameters(inventree_api):
     }
 
     for category_parameter in category_parameters:
-        if not category_parameter in part_category_parameter_templates:
+        if category_parameter not in part_category_parameter_templates:
             category_path, parameter = category_parameter
             category_str = "/".join(category_path)
             info(f"creating parameter template '{parameter}' for '{category_str}' ...")
@@ -168,7 +167,7 @@ def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
             continue
 
         for child in values.keys():
-            if child.startswith("_") and not child in CATEGORY_ATTRIBUTES:
+            if child.startswith("_") and child not in CATEGORY_ATTRIBUTES:
                 warning(f"ignoring unknown special attribute '{child}' in category '{name}'")
 
         new_parameters = parameters + tuple(values.get("_parameters", []))
@@ -202,11 +201,12 @@ def parse_parameters(parameters_dict):
         if values is None:
             values = {}
         elif not isinstance(values, dict):
-            warning(f"failed to parse parameter '{name}' (invalid type, should be dict or null)")
+            warning(
+                f"failed to parse parameter '{name}' (invalid type, should be dict or null)")
             continue
 
         for child in values.keys():
-            if child.startswith("_") and not child in PARAMETER_ATTRIBUTES:
+            if child.startswith("_") and child not in PARAMETER_ATTRIBUTES:
                 warning(f"ignoring unknown special attribute '{child}' in parameter '{name}'")
 
         parameters[name] = Parameter(

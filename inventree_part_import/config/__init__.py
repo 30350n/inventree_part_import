@@ -10,15 +10,16 @@ from typing import TYPE_CHECKING
 
 from cutie import prompt_yes_or_no, secure_input, select_multiple
 from inventree.api import InvenTreeAPI
-from isocodes import countries, languages, currencies
+from isocodes import countries, currencies, languages
 from platformdirs import user_config_path
 import yaml
 from yaml.error import MarkedYAMLError
 
 if TYPE_CHECKING:
     from ..suppliers.base import Supplier
-from ..error_helper import *
+
 from .. import __package__ as parent_package
+from ..error_helper import *
 
 CONFIG_DIR = user_config_path(parent_package, ensure_exists=True)
 TEMPLATE_DIR = Path(__file__).parent
@@ -152,10 +153,10 @@ def load_suppliers_config(suppliers: dict[str, Supplier]):
         selection = select_multiple(
             [supplier.name for supplier in suppliers.values()],
             ticked_indices=list(range(len(suppliers))),
-            deselected_unticked_prefix = "  [ ] ",
-            deselected_ticked_prefix   = "  [x] ",
-            selected_unticked_prefix   = "> [ ] ",
-            selected_ticked_prefix     = "> [x] ",
+            deselected_unticked_prefix="  [ ] ",
+            deselected_ticked_prefix="  [x] ",
+            selected_unticked_prefix="> [ ] ",
+            selected_ticked_prefix="> [x] ",
         )
 
         suppliers_out = {}

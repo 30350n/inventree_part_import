@@ -6,8 +6,8 @@ from types import MethodType
 import requests
 from requests.compat import quote, urlencode
 
-from .base import ApiPart, Supplier
 from ..error_helper import *
+from .base import ApiPart, Supplier
 
 class TME(Supplier):
     def setup(self, api_token, api_secret, currency, language, location):
@@ -83,6 +83,7 @@ def fix_tme_url(url):
 
 class TMEApi:
     BASE_URL = "https://api.tme.eu/"
+
     def __init__(
         self, token, secret, language="EN", country="PL", currency="EUR", net_prices=True,
     ):
@@ -175,6 +176,7 @@ class TMEApi:
         return []
 
     HEADERS = {"Content-type": "application/x-www-form-urlencoded"}
+
     def _api_call(self, action, data):
         url = f"{self.BASE_URL}{action}.json"
         data_sorted = dict(sorted({**data, "Token": self.token}.items()))

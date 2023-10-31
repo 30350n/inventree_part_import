@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from inspect import _empty
 import inspect
+from inspect import _empty
 import re
 
 from ..config import get_pre_creation_hooks
@@ -30,7 +30,7 @@ class ApiPart:
 
     def finalize_hook(self):
         return True
-    
+
     def get_part_data(self):
         return {
             "name": self.MPN,
@@ -40,7 +40,7 @@ class ApiPart:
             "component": True,
             "purchaseable": True,
         }
-    
+
     def get_manufacturer_part_data(self):
         return {
             "MPN": self.MPN,

@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 from requests import Session
 from requests.compat import quote
 
-from .base import ApiPart, Supplier, money2float
-from .scrape import scrape, REQUEST_TIMEOUT
 from ..error_helper import *
+from .base import ApiPart, Supplier, money2float
+from .scrape import REQUEST_TIMEOUT, scrape
 
 BASE_URL = "https://reichelt.com/"
 LOCALE_CHANGE_URL = f"{BASE_URL}index.html?ACTION=12&PAGE=46"
@@ -64,7 +64,7 @@ class Reichelt(Supplier):
                     continue
 
             availability = result.find("p", class_="availability").find("span")["class"][0]
-            if not availability in AVAILABILITY_MAP:
+            if availability not in AVAILABILITY_MAP:
                 warning(f"unknown reichelt availability '{availability}' ({supplier_link})")
 
             price_breaks = {}
@@ -116,7 +116,7 @@ class Reichelt(Supplier):
         mpn = "".join(header.find().find_all(text=True, recursive=False)).replace(" ", "")
 
         availability = soup.find("p", class_="availability").find("span")["class"][0]
-        if not availability in AVAILABILITY_MAP:
+        if availability not in AVAILABILITY_MAP:
             warning(f"unknown reichelt availability '{availability}' ({link})")
 
         price_breaks = {}
@@ -183,7 +183,7 @@ class Reichelt(Supplier):
                 api_part.price_breaks = {1: float(price["content"])}
 
         return True
-    
+
     def setup_hook(self, session: Session):
         form_page = session.get(LOCALE_CHANGE_URL, timeout=REQUEST_TIMEOUT)
         if form_page.status_code == 200:

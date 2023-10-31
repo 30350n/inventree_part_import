@@ -1,9 +1,10 @@
 import re
+
 from requests import Session
 
-from .base import ApiPart, Supplier
 from ..error_helper import *
-from .scrape import scrape, REQUEST_TIMEOUT
+from .base import ApiPart, Supplier
+from .scrape import REQUEST_TIMEOUT, scrape
 
 API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
 CURRENCY_URL     = f"{API_BASE_URL}home/currency?currencyCode={{}}"
@@ -12,7 +13,7 @@ PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
 class LCSC(Supplier):
     def setup(self, currency, ignore_duplicates=True):
-        if not currency in CURRENCY_MAP.values():
+        if currency not in CURRENCY_MAP.values():
             error(f"failed to load '{self.name}' module (unsupported currency '{currency}')")
             return False
 

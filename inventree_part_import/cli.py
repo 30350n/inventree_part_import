@@ -3,15 +3,15 @@ from pathlib import Path
 import click
 from cutie import select
 from tablib import import_set
-from tablib.exceptions import UnsupportedFormat, TablibException
+from tablib.exceptions import TablibException, UnsupportedFormat
 from thefuzz import fuzz
 
-from .config import setup_inventree_api, update_supplier_config, update_config_file
-from .config import CONFIG_DIR, SUPPLIERS_CONFIG
-from .error_helper import *
 from . import error_helper
+from .config import (CONFIG_DIR, SUPPLIERS_CONFIG, setup_inventree_api, update_config_file,
+                     update_supplier_config)
+from .error_helper import *
 from .part_importer import PartImporter
-from .suppliers import setup_supplier_companies, get_suppliers
+from .suppliers import get_suppliers, setup_supplier_companies
 
 def handle_keyboard_interrupt(func):
     def wrapper(*args, **kwargs):
@@ -44,7 +44,7 @@ def inventree_part_import(
     if config_dir:
         print(CONFIG_DIR)
         return
-    
+
     if configure:
         _, available_suppliers = get_suppliers()
         supplier = available_suppliers[configure]
