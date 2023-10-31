@@ -84,7 +84,7 @@ def fix_tme_url(url):
 class TMEApi:
     BASE_URL = "https://api.tme.eu/"
     def __init__(
-        self, token, secret, language="EN", country="PL", currency="EUR", price_type="NET",
+        self, token, secret, language="EN", country="PL", currency="EUR", net_prices=True,
     ):
         self._categories = None
         self.token = token
@@ -92,7 +92,7 @@ class TMEApi:
         self.language = language
         self.country = country
         self.currency = currency
-        self.price_type = price_type
+        self.net_prices = net_prices
 
     def get_category_path(self, category_id):
         if self._categories is None:
@@ -119,6 +119,7 @@ class TMEApi:
             products = result.json()["Data"]["ProductList"]
             if products and len(products) == 1:
                 return products[0]
+        return []
 
     def product_search(self, search_term):
         result = self._api_call("Products/Search", {
@@ -128,6 +129,7 @@ class TMEApi:
         })
         if result:
             return result.json()["Data"]
+        return []
 
     def get_prices_and_stocks(self, product_symbols):
         if not product_symbols:
@@ -137,17 +139,16 @@ class TMEApi:
             "Country": self.country,
             "Language": self.language,
             "Currency": self.currency,
-            "GrossPrices": "false",
+            "GrossPrices": str(not self.net_prices).lower(),
         }
-        for i, symbol in enumerate(product_symbols):
+        for i, symbol in enumerate(product_symbols[:10]):
             data[f"SymbolList[{i}]"] = symbol
 
         if result := self._api_call("Products/GetPricesAndStocks", data):
             result_data = result.json()["Data"]
             assert result_data["Currency"] == self.currency
-            assert result_data["PriceType"] == self.price_type
+            assert result_data["PriceType"] == ("NET" if self.net_prices else "GROSS")
             return result_data["ProductList"]
-        
         return []
 
     def get_parameters(self, product_symbol):
@@ -158,6 +159,7 @@ class TMEApi:
         })
         if result:
             return result.json()["Data"]["ProductList"][0]["ParameterList"]
+        return []
 
     def get_categories(self):
         result = self._api_call("Products/GetCategories", {
@@ -165,26 +167,27 @@ class TMEApi:
             "Language": self.language,
             "Tree": "false",
         })
-        return result.json()["Data"]["CategoryTree"]
+        if result:
+            return result.json()["Data"]["CategoryTree"]
+        return []
 
     HEADERS = {"Content-type": "application/x-www-form-urlencoded"}
     def _api_call(self, action, data):
-        url = f"{self.base_url}{action}.json"
-        data_sorted = dict(sorted({**data, "Token": self.api_token}.items()))
+        url = f"{self.BASE_URL}{action}.json"
+        data_sorted = dict(sorted({**data, "Token": self.token}.items()))
 
         signature_base = f"POST&{quote(url, '')}&{quote(urlencode(data_sorted), '')}".encode()
-        signature = b64encode(hmac.new(self.api_secret.encode(), signature_base, sha1).digest())
+        signature = b64encode(hmac.new(self.secret.encode(), signature_base, sha1).digest())
         data_sorted["ApiSignature"] = signature
 
         result = requests.post(url, urlencode(data_sorted), headers=self.HEADERS)
         if result.status_code != 200:
             try:
-                status = result.json()['Status']
-                if status in {"E_INPUT_PARAMS_VALIDATION_ERROR", "E_INVALID_SIGNATURE"}:
-                    return None
-                warning(f"'{action}' action failed with '{status}'")
+                status = result.json()["Status"]
+                if status != "E_INPUT_PARAMS_VALIDATION_ERROR":
+                    error(f"'{action}' action failed with '{status}'", prefix="TME API error: ")
             except (requests.exceptions.JSONDecodeError, KeyError):
-                warning(f"'{action}' action failed with unknown error")
+                error(f"'{action}' action failed with unknown error", prefix="TME API error: ")
             return None
 
         return result
