@@ -11,12 +11,13 @@ SEARCH_URL       = f"{API_BASE_URL}search/global?keyword={{}}"
 PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
 class LCSC(Supplier):
-    def setup(self, currency):
+    def setup(self, currency, ignore_duplicates=True):
         if not currency in CURRENCY_MAP.values():
             error(f"failed to load '{self.name}' module (unsupported currency '{currency}')")
             return False
 
         self.currency = currency
+        self.ignore_duplicates = ignore_duplicates
         return True
 
     def search(self, search_term):
@@ -39,6 +40,16 @@ class LCSC(Supplier):
                 product for product in filtered_matches
                 if product["productModel"].lower() == search_term.lower()
             ]
+            if self.ignore_duplicates:
+                exact_filtered = [
+                    product for product in exact_matches
+                    if product.get("stockNumber")
+                    or product.get("productImageUrlBig")
+                    or product.get("productImageUrl")
+                    or product.get("productImages")
+                ]
+                exact_matches = exact_filtered if exact_filtered else exact_matches
+
             if exact_matches:
                 filtered_matches = exact_matches
 
