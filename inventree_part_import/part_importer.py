@@ -1,17 +1,17 @@
 from enum import Enum
 from multiprocessing.pool import ThreadPool
-import requests, re
+import re
 
-from inventree.part import Part, Parameter
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
+from inventree.part import Parameter, Part
+import requests
 
-from .categories import setup_categories_and_parameters, CATEGORIES_CONFIG
-from .config import get_pre_creation_hooks
+from .categories import setup_categories_and_parameters
+from .config import CATEGORIES_CONFIG, get_pre_creation_hooks
 from .error_helper import *
-from .inventree_helpers import (
-    create_manufacturer, get_parameter_templates, get_part, get_manufacturer_part,
-    get_supplier_part, update_object_data, upload_image,
-)
+from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
+                                get_parameter_templates, get_part, get_supplier_part,
+                                update_object_data, upload_image)
 from .suppliers import search
 from .suppliers.base import ApiPart
 
@@ -107,7 +107,7 @@ class PartImporter:
         if api_part.parameters:
             if not (category := self.part_category_to_category.get(part.category)):
                 name = part.getCategory().pathstring
-                error(f"category '{name}' is not defined in {CATEGORIES_CONFIG.name}")
+                error(f"category '{name}' is not defined in {CATEGORIES_CONFIG}")
                 return ImportResult.FAILURE
 
             self.setup_parameters(part, api_part, category, update_part)

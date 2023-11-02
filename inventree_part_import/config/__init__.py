@@ -21,28 +21,45 @@ if TYPE_CHECKING:
 from .. import __package__ as parent_package
 from ..error_helper import *
 
-CONFIG_DIR = user_config_path(parent_package, ensure_exists=True)
-TEMPLATE_DIR = Path(__file__).parent
+PARENT_DIR = Path(__file__).parent
 
-# if someone decides to create a git repository in the CONFIG_DIR,
-# stop them from leaking their api keys
-_gitignore = CONFIG_DIR / ".gitignore"
-if not _gitignore.exists():
-    _gitignore.write_text("inventree.yaml\nsuppliers.yaml\n", encoding="utf-8")
+_CONFIG_DIR = None
+def get_config_dir():
+    return _CONFIG_DIR
 
-INVENTREE_CONFIG = CONFIG_DIR / "inventree.yaml"
+def set_config_dir(new_config_dir: Path):
+    global _CONFIG_DIR
+    new_config_dir = Path(new_config_dir).resolve()
+    new_config_dir.mkdir(parents=True, exist_ok=True)
+    _CONFIG_DIR = new_config_dir
+    _setup_gitignore()
+
+def _setup_gitignore():
+    # if someone decides to create a git repository in the CONFIG_DIR,
+    # stop them from leaking their api keys
+    _gitignore = _CONFIG_DIR / ".gitignore"
+    if not _gitignore.exists():
+        _gitignore.write_text("inventree.yaml\nsuppliers.yaml\n", encoding="utf-8")
+
+# setup default config dir
+set_config_dir(user_config_path(parent_package))
+
+INVENTREE_CONFIG = "inventree.yaml"
 def setup_inventree_api():
+    inventree_config = _CONFIG_DIR / INVENTREE_CONFIG
     info("setting up InvenTree API ...")
-    if INVENTREE_CONFIG.is_file():
-        info(f"loading api configuration from '{INVENTREE_CONFIG.name}' ...")
+    if inventree_config.is_file():
+        info(f"loading api configuration from '{INVENTREE_CONFIG}' ...")
         try:
-            config = yaml.safe_load(INVENTREE_CONFIG.read_text(encoding="utf-8"))
-            return InvenTreeAPI(host=config.get("host"), token=config.get("token"))
+            config = yaml.safe_load(inventree_config.read_text(encoding="utf-8"))
+            host = config.get("host")
+            return InvenTreeAPI(host=host, token=config.get("token"))
         except MarkedYAMLError as e:
             error(e, prefix="")
         except (ConnectionError, TimeoutError) as e:
             error(f"failed to connect to '{host}' with '{e}'")
-            if not prompt_yes_or_no("do you want to enter your connection details again?"):
+            print()
+            if not prompt_yes_or_no("enter new connection details?", default_is_yes=True):
                 return None
     else:
         print()
@@ -52,8 +69,7 @@ def setup_inventree_api():
         prompt("setup your InvenTree API connection:", end="\n")
         host = prompt_input("host")
         username = prompt_input("username")
-        prompt("password:", end="")
-        password = secure_input("").strip()
+        password = secure_input("password:").strip()
         try:
             inventree_api = InvenTreeAPI(
                 host, username=username, password=password, use_token_auth=True,
@@ -62,27 +78,28 @@ def setup_inventree_api():
             error(f"failed to connect to '{host}' with '{e}'")
 
     yaml_data = yaml.safe_dump({"host": host, "token": inventree_api.token}, sort_keys=False)
-    INVENTREE_CONFIG.write_text(yaml_data, encoding="utf-8")
-    success(f"wrote API configuration to '{INVENTREE_CONFIG}'")
+    inventree_config.write_text(yaml_data, encoding="utf-8")
+    success(f"wrote API configuration to '{inventree_config}'")
 
     return inventree_api
 
-CONFIG = CONFIG_DIR / "config.yaml"
 _CONFIG_LOADED = None
+CONFIG = "config.yaml"
 def get_config():
     global _CONFIG_LOADED
     if _CONFIG_LOADED is not None:
         return _CONFIG_LOADED
 
-    if CONFIG.is_file():
+    config = _CONFIG_DIR / CONFIG
+    if config.is_file():
         try:
-            _CONFIG_LOADED = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))
+            _CONFIG_LOADED = yaml.safe_load(config.read_text(encoding="utf-8"))
             return _CONFIG_LOADED
         except MarkedYAMLError as e:
             error(e, prefix="")
             sys.exit(1)
 
-    info(f"failed to find {CONFIG.name} config file", end="\n")
+    info(f"failed to find {CONFIG} config file", end="\n")
     new_configuration_hint()
 
     prompt("\nsetup your default configuration:", end="\n")
@@ -99,25 +116,25 @@ def get_config():
         "location": location,
         "scraping": scraping,
     }
-    with CONFIG.open("w", encoding="utf-8") as file:
+    with config.open("w", encoding="utf-8") as file:
         yaml.safe_dump(_CONFIG_LOADED, file, sort_keys=False)
     success("setup default configuration!")
     return _CONFIG_LOADED
 
-CATEGORIES_CONFIG = CONFIG_DIR / "categories.yaml"
+CATEGORIES_CONFIG = "categories.yaml"
 def get_categories_config():
-    return _get_config_file(CATEGORIES_CONFIG)
+    return _get_config_file(_CONFIG_DIR / CATEGORIES_CONFIG)
 
-PARAMETERS_CONFIG = CONFIG_DIR / "parameters.yaml"
+PARAMETERS_CONFIG = "parameters.yaml"
 def get_parameters_config():
-    return _get_config_file(PARAMETERS_CONFIG)
+    return _get_config_file(_CONFIG_DIR / PARAMETERS_CONFIG)
 
 def _get_config_file(config_path: Path):
     if not config_path.is_file():
         info(f"failed to find {config_path.name} config file", end="\n")
         new_configuration_hint()
         if prompt_yes_or_no("copy the default configuration file?", default_is_yes=True):
-            shutil.copy(TEMPLATE_DIR / config_path.name, config_path)
+            shutil.copy(PARENT_DIR / config_path.name, config_path)
         else:
             return None
 
@@ -139,13 +156,14 @@ def update_config_file(config_path: Path):
         config_path.write_text(yaml_data, encoding="utf-8")
         backup_path.unlink()
 
-SUPPLIERS_CONFIG = CONFIG_DIR / "suppliers.yaml"
+SUPPLIERS_CONFIG = "suppliers.yaml"
 def load_suppliers_config(suppliers: dict[str, Supplier]):
-    if not SUPPLIERS_CONFIG.is_file():
-        info(f"failed to find {SUPPLIERS_CONFIG.name} config file", end="\n")
+    suppliers_config = _CONFIG_DIR / SUPPLIERS_CONFIG
+    if not suppliers_config.is_file():
+        info(f"failed to find {SUPPLIERS_CONFIG} config file", end="\n")
         new_configuration_hint()
 
-        suppliers_config = {}
+        suppliers_config_data = {}
         prompt(
             "\nselect the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)",
             end="\n",
@@ -164,27 +182,27 @@ def load_suppliers_config(suppliers: dict[str, Supplier]):
         for id in (supplier_ids[index] for index in selection):
             new_supplier_config = update_supplier_config(suppliers[id], {})
             if new_supplier_config is not None:
-                suppliers_config[id] = new_supplier_config
+                suppliers_config_data[id] = new_supplier_config
                 suppliers_out[id] = suppliers[id]
 
-        yaml_data = yaml.safe_dump(suppliers_config, indent=4, sort_keys=False)
-        SUPPLIERS_CONFIG.write_text(yaml_data, encoding="utf-8")
+        yaml_data = yaml.safe_dump(suppliers_config_data, indent=4, sort_keys=False)
+        suppliers_config.write_text(yaml_data, encoding="utf-8")
 
         return suppliers_out
 
     suppliers_out = {}
     try:
-        with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
-            for id, supplier_config in suppliers_config.items():
+        with update_config_file(suppliers_config) as suppliers_config_data:
+            for id, supplier_config in suppliers_config_data.items():
                 if supplier_config is None:
                     continue
                 if supplier := suppliers.get(id):
                     new_supplier_config = update_supplier_config(supplier, supplier_config)
                     if new_supplier_config is not None:
-                        suppliers_config[id] = new_supplier_config
+                        suppliers_config_data[id] = new_supplier_config
                         suppliers_out[id] = supplier
                 else:
-                    warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG.name}'")
+                    warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
     except MarkedYAMLError as e:
         error(e, prefix="")
         sys.exit(1)
@@ -214,25 +232,26 @@ def update_supplier_config(supplier: Supplier, supplier_config: dict, force_upda
 
     return {**supplier_config, **new_supplier_config}
 
-HOOKS_CONFIG = CONFIG_DIR / "hooks.py"
 _PRE_CREATION_HOOKS = None
+HOOKS_CONFIG = "hooks.py"
 def get_pre_creation_hooks():
     global _PRE_CREATION_HOOKS
     if _PRE_CREATION_HOOKS is not None:
         return _PRE_CREATION_HOOKS
-
     _PRE_CREATION_HOOKS = []
-    if not HOOKS_CONFIG.is_file():
+
+    hooks_config = _CONFIG_DIR / HOOKS_CONFIG
+    if not hooks_config.is_file():
         return _PRE_CREATION_HOOKS
 
     info("loading pre creation hooks ...")
     try:
-        hooks_spec = importlib.util.spec_from_file_location(HOOKS_CONFIG.stem, HOOKS_CONFIG)
+        hooks_spec = importlib.util.spec_from_file_location(hooks_config.stem, hooks_config)
         hooks_module = importlib.util.module_from_spec(hooks_spec)
-        sys.modules[HOOKS_CONFIG.stem] = hooks_module
+        sys.modules[hooks_config.stem] = hooks_module
         hooks_spec.loader.exec_module(hooks_module)
     except ImportError as e:
-        error(f"failed to load '{HOOKS_CONFIG.name}' with {e}")
+        error(f"failed to load '{HOOKS_CONFIG}' with {e}")
         return _PRE_CREATION_HOOKS
 
     _PRE_CREATION_HOOKS = [hook for hook in vars(hooks_module).values() if isfunction(hook)]
@@ -267,9 +286,9 @@ def input_default(prompt, default_value=None):
         if value or default_value:
             return value or default_value
 
-NEW_CONFIGURATION_HINT = True
+_NEW_CONFIGURATION_HINT = True
 def new_configuration_hint():
-    global NEW_CONFIGURATION_HINT
-    if NEW_CONFIGURATION_HINT:
+    global _NEW_CONFIGURATION_HINT
+    if _NEW_CONFIGURATION_HINT:
         hint("this is normal if you're using this program for the first time")
-        NEW_CONFIGURATION_HINT = False
+        _NEW_CONFIGURATION_HINT = False

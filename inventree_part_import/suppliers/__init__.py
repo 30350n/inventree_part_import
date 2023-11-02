@@ -3,10 +3,11 @@ from inspect import isclass
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
-from .base import Supplier
-from ..config import load_suppliers_config, update_config_file, get_config, SUPPLIERS_CONFIG
+from ..config import (SUPPLIERS_CONFIG, get_config, get_config_dir, load_suppliers_config,
+                      update_config_file)
 from ..error_helper import *
 from ..inventree_helpers import Company
+from .base import Supplier
 
 _SUPPLIERS = None
 def search(search_term, supplier_id: str = None, only_supplier=False):
@@ -29,7 +30,7 @@ def search(search_term, supplier_id: str = None, only_supplier=False):
                 suppliers.remove(supplier)
                 suppliers.insert(0, supplier)
         else:
-            error(f"supplier id '{supplier_id}' not defined in {SUPPLIERS_CONFIG.name}")
+            error(f"supplier id '{supplier_id}' not defined in {SUPPLIERS_CONFIG}")
             return None
 
     thread_pool = ThreadPool(processes=8)
@@ -43,7 +44,7 @@ def setup_supplier_companies(inventree_api):
     global _SUPPLIER_COMPANIES
     _SUPPLIER_COMPANIES = {}
     global_config = get_config()
-    with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
+    with update_config_file(get_config_dir() / SUPPLIERS_CONFIG) as suppliers_config:
         for id, supplier_object in _SUPPLIER_OBJECTS.items():
             supplier_config = suppliers_config[id]
             api_company = Company(

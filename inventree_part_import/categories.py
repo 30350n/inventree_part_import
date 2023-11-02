@@ -19,7 +19,7 @@ def setup_categories_and_parameters(inventree_api):
 
     for parameter in used_parameters:
         if parameter not in parameters:
-            error(f"parameter '{parameter}' not defined in {PARAMETERS_CONFIG.name}")
+            error(f"parameter '{parameter}' not defined in {PARAMETERS_CONFIG}")
             return None, None
         if parameter not in used_parameters:
             warning(f"parameter '{parameter}' is defined, but not being used")
@@ -63,7 +63,7 @@ def setup_categories_and_parameters(inventree_api):
             if (parent := categories.get(category_path[:-i])) and parent.ignore:
                 break
         else:
-            warning(f"category '{path_str}' on host is not defined in {CATEGORIES_CONFIG.name}")
+            warning(f"category '{path_str}' on host is not defined in {CATEGORIES_CONFIG}")
 
     parameter_templates = {
         parameter_template.name: parameter_template
@@ -91,7 +91,7 @@ def setup_categories_and_parameters(inventree_api):
         if parameter_template not in parameters:
             warning(
                 f"parameter template '{parameter_template}' on host "
-                f"is not defined in {CATEGORIES_CONFIG.name}"
+                f"is not defined in {CATEGORIES_CONFIG}"
             )
 
     category_parameters = {
@@ -117,7 +117,7 @@ def setup_categories_and_parameters(inventree_api):
         if (part_category, parameter_template) not in category_parameters:
             warning(
                 f"parameter template '{parameter_template}' for '{'/'.join(part_category)}' "
-                f"on host is not defined in {CATEGORIES_CONFIG.name}")
+                f"on host is not defined in {CATEGORIES_CONFIG}")
 
     category_map = {}
     ignore = set()

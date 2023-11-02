@@ -7,8 +7,8 @@ from tablib.exceptions import TablibException, UnsupportedFormat
 from thefuzz import fuzz
 
 from . import error_helper
-from .config import (CONFIG_DIR, SUPPLIERS_CONFIG, setup_inventree_api, update_config_file,
-                     update_supplier_config)
+from .config import (SUPPLIERS_CONFIG, get_config_dir, set_config_dir, setup_inventree_api,
+                     update_config_file, update_supplier_config)
 from .error_helper import *
 from .part_importer import PartImporter
 from .suppliers import get_suppliers, setup_supplier_companies
@@ -29,12 +29,19 @@ AvailableSuppliersChoices = click.Choice(_available_suppliers.keys())
 @click.argument("inputs", nargs=-1)
 @click.option("-s", "--supplier", type=SuppliersChoices, help="Search this supplier first.")
 @click.option("-o", "--only", type=SuppliersChoices, help="Only search this supplier.")
+@click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
-@click.option("--config-dir", is_flag=True, help="Show path to config directory and exit.")
+@click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
 @handle_keyboard_interrupt
 def inventree_part_import(
-    inputs, supplier=None, only=None, verbose=False, config_dir=False, configure=None,
+    inputs,
+    supplier=None,
+    only=None,
+    config_dir=False,
+    verbose=False,
+    show_config_dir=False,
+    configure=None,
 ):
     """Import supplier parts into InvenTree.
 
@@ -42,13 +49,22 @@ def inventree_part_import(
     """
 
     if config_dir:
-        print(CONFIG_DIR)
+        try:
+            set_config_dir(Path(config_dir))
+            if not show_config_dir:
+                info(f"set configuration directory to '{config_dir}'", end="\n")
+        except OSError as e:
+            error(f"failed to create '{config_dir}' with '{e}'")
+            return
+
+    if show_config_dir:
+        print(get_config_dir())
         return
 
     if configure:
         _, available_suppliers = get_suppliers()
         supplier = available_suppliers[configure]
-        with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
+        with update_config_file(get_config_dir() / SUPPLIERS_CONFIG) as suppliers_config:
             supplier_config = config if (config := suppliers_config.get(configure)) else {}
             new_config = update_supplier_config(supplier, supplier_config, force_update=True)
             if new_config:
