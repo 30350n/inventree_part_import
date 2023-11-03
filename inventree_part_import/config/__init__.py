@@ -157,55 +157,59 @@ def update_config_file(config_path: Path):
         backup_path.unlink()
 
 SUPPLIERS_CONFIG = "suppliers.yaml"
-def load_suppliers_config(suppliers: dict[str, Supplier]):
+def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
     suppliers_config = _CONFIG_DIR / SUPPLIERS_CONFIG
-    if not suppliers_config.is_file():
-        info(f"failed to find {SUPPLIERS_CONFIG} config file", end="\n")
-        new_configuration_hint()
-
-        suppliers_config_data = {}
-        prompt(
-            "\nselect the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)",
-            end="\n",
-        )
-        selection = select_multiple(
-            [supplier.name for supplier in suppliers.values()],
-            ticked_indices=list(range(len(suppliers))),
-            deselected_unticked_prefix="  [ ] ",
-            deselected_ticked_prefix="  [x] ",
-            selected_unticked_prefix="> [ ] ",
-            selected_ticked_prefix="> [x] ",
-        )
-
+    if suppliers_config.is_file():
         suppliers_out = {}
-        supplier_ids = list(suppliers.keys())
-        for id in (supplier_ids[index] for index in selection):
-            new_supplier_config = update_supplier_config(suppliers[id], {})
-            if new_supplier_config is not None:
-                suppliers_config_data[id] = new_supplier_config
-                suppliers_out[id] = suppliers[id]
-
-        yaml_data = yaml.safe_dump(suppliers_config_data, indent=4, sort_keys=False)
-        suppliers_config.write_text(yaml_data, encoding="utf-8")
-
-        return suppliers_out
-
-    suppliers_out = {}
-    try:
-        with update_config_file(suppliers_config) as suppliers_config_data:
-            for id, supplier_config in suppliers_config_data.items():
-                if supplier_config is None:
-                    continue
-                if supplier := suppliers.get(id):
+        try:
+            with update_config_file(suppliers_config) as suppliers_config_data:
+                for id, supplier_config in suppliers_config_data.items():
+                    if supplier_config is None:
+                        continue
+                    if not (supplier := suppliers.get(id)):
+                        warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
+                        continue
                     new_supplier_config = update_supplier_config(supplier, supplier_config)
                     if new_supplier_config is not None:
                         suppliers_config_data[id] = new_supplier_config
                         suppliers_out[id] = supplier
-                else:
-                    warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
-    except MarkedYAMLError as e:
-        error(e, prefix="")
-        sys.exit(1)
+        except MarkedYAMLError as e:
+            error(e, prefix="")
+            sys.exit(1)
+
+        return suppliers_out
+
+    if not setup:
+        return {}
+
+    info(suppliers_config)
+    info(f"failed to find {SUPPLIERS_CONFIG} config file", end="\n")
+    new_configuration_hint()
+
+    suppliers_config_data = {}
+    prompt(
+        "\nselect the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)",
+        end="\n",
+    )
+    selection = select_multiple(
+        [supplier.name for supplier in suppliers.values()],
+        ticked_indices=list(range(len(suppliers))),
+        deselected_unticked_prefix="  [ ] ",
+        deselected_ticked_prefix="  [x] ",
+        selected_unticked_prefix="> [ ] ",
+        selected_ticked_prefix="> [x] ",
+    )
+
+    suppliers_out = {}
+    supplier_ids = list(suppliers.keys())
+    for id in (supplier_ids[index] for index in selection):
+        new_supplier_config = update_supplier_config(suppliers[id], {})
+        if new_supplier_config is not None:
+            suppliers_config_data[id] = new_supplier_config
+            suppliers_out[id] = suppliers[id]
+
+    yaml_data = yaml.safe_dump(suppliers_config_data, indent=4, sort_keys=False)
+    suppliers_config.write_text(yaml_data, encoding="utf-8")
 
     return suppliers_out
 

@@ -21,7 +21,7 @@ def handle_keyboard_interrupt(func):
             error("Aborting Execution! (KeyboardInterrupt)", prefix="")
     return wrapper
 
-_suppliers, _available_suppliers = get_suppliers()
+_suppliers, _available_suppliers = get_suppliers(setup=False)
 SuppliersChoices = click.Choice(_suppliers.keys())
 AvailableSuppliersChoices = click.Choice(_available_suppliers.keys())
 
@@ -51,11 +51,23 @@ def inventree_part_import(
     if config_dir:
         try:
             set_config_dir(Path(config_dir))
-            if not show_config_dir:
-                info(f"set configuration directory to '{config_dir}'", end="\n")
         except OSError as e:
             error(f"failed to create '{config_dir}' with '{e}'")
             return
+
+        if not show_config_dir:
+            info(f"set configuration directory to '{config_dir}'", end="\n")
+
+        # update used/available suppliers, because they already got loaded before
+        # also update the Choice types to be able to print the help message properly
+        suppliers, available_suppliers = get_suppliers(reload=True, setup=False)
+
+        params = {param.name: param for param in click.get_current_context().command.params}
+        SuppliersChoices = click.Choice(suppliers.keys())
+        AvailableSuppliersChoices = click.Choice(available_suppliers.keys())
+        params["supplier"].type = SuppliersChoices
+        params["only"].type = SuppliersChoices
+        params["configure"].type = AvailableSuppliersChoices
 
     if show_config_dir:
         print(get_config_dir())

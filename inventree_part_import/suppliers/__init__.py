@@ -58,9 +58,9 @@ def setup_supplier_companies(inventree_api):
 
 _SUPPLIER_OBJECTS = None
 _AVAILABLE_SUPPLIER_OBJECTS = None
-def get_suppliers() -> (dict, dict):
+def get_suppliers(reload=False, setup=True) -> (dict, dict):
     global _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS
-    if _SUPPLIER_OBJECTS is not None:
+    if not reload and _SUPPLIER_OBJECTS is not None:
         return _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS
 
     _SUPPLIER_OBJECTS = {}
@@ -88,7 +88,7 @@ def get_suppliers() -> (dict, dict):
         id = module_name.split("supplier_", 1)[-1]
         _AVAILABLE_SUPPLIER_OBJECTS[id] = supplier_classes[0]()
 
-    _SUPPLIER_OBJECTS = load_suppliers_config(_AVAILABLE_SUPPLIER_OBJECTS)
+    _SUPPLIER_OBJECTS = load_suppliers_config(_AVAILABLE_SUPPLIER_OBJECTS, setup=setup)
 
     if (available := len(_AVAILABLE_SUPPLIER_OBJECTS)) > (loaded := len(_SUPPLIER_OBJECTS)):
         hint(f"only {loaded} of {available} available supplier modules are configured")
