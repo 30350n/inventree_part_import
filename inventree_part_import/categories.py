@@ -15,7 +15,7 @@ def setup_categories_and_parameters(inventree_api):
     parameters_config = get_parameters_config()
     parameters = parse_parameters(parameters_config)
 
-    used_parameters = set.union(*[set(category.parameters) for category in categories.values()])
+    used_parameters = set.union(set(), *(set(c.parameters) for c in categories.values()))
 
     for parameter in used_parameters:
         if parameter not in parameters:
@@ -155,6 +155,9 @@ class Category:
 
 CATEGORY_ATTRIBUTES = {"_parameters", "_description", "_ignore", "_structural", "_aliases"}
 def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
+    if not categories_dict:
+        return {}
+
     categories = {}
     for name, values in categories_dict.items():
         if name.startswith("_"):
@@ -196,6 +199,9 @@ class Parameter:
 
 PARAMETER_ATTRIBUTES = {"_description", "_aliases", "_unit"}
 def parse_parameters(parameters_dict):
+    if not parameters_dict:
+        return {}
+
     parameters = {}
     for name, values in parameters_dict.items():
         if values is None:
