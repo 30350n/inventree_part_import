@@ -1,0 +1,21 @@
+# Docker compose recipe for spawning a simple InvenTree server instance.
+# adopted from https://github.com/inventree/inventree-python/blob/master/test/docker-compose.yml
+
+services:
+  inventree-part-import-test:
+    container_name: inventree-part-import-test
+    image: inventree/inventree:latest
+    ports:
+      # Expose internal port 8000 on external port 55555
+      - 55555:8000
+    environment:
+      - INVENTREE_DEBUG=True
+      - INVENTREE_DB_ENGINE=sqlite
+      - INVENTREE_DB_NAME=/home/inventree/data/test_db.sqlite3
+      - INVENTREE_DEBUG_LEVEL=error
+      - INVENTREE_ADMIN_USER=testuser
+      - INVENTREE_ADMIN_PASSWORD=testpassword
+      - INVENTREE_ADMIN_EMAIL=test@test.com
+    restart: unless-stopped
+    volumes:
+      - ./data:/home/inventree/data
