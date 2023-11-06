@@ -22,23 +22,26 @@ class Mouser(Supplier):
         search_request = MouserPartSearchRequest("partnumber")
         search_request.part_search(search_term)
 
-        if parts := search_request.get_response()["SearchResults"]["Parts"]:
-            search_term_lower = search_term.lower()
-            filtered_matches = [
-                part for part in parts
-                if part.get("ManufacturerPartNumber", "").lower().startswith(search_term_lower)
-            ]
+        response = search_request.get_response()
+        if not isinstance(response, dict):
+            return [], 0
+        if not (parts := response.get("SearchResults", {}).get("Parts")):
+            return [], 0
 
-            exact_matches = [
-                part for part in filtered_matches
-                if part.get("ManufacturerPartNumber", "").lower() == search_term_lower
-            ]
-            if exact_matches:
-                filtered_matches = exact_matches
+        search_term_lower = search_term.lower()
+        filtered_matches = [
+            part for part in parts
+            if part.get("ManufacturerPartNumber", "").lower().startswith(search_term_lower)
+        ]
 
-            return list(map(self.get_api_part, filtered_matches)), len(filtered_matches)
+        exact_matches = [
+            part for part in filtered_matches
+            if part.get("ManufacturerPartNumber", "").lower() == search_term_lower
+        ]
+        if exact_matches:
+            filtered_matches = exact_matches
 
-        return [], 0
+        return list(map(self.get_api_part, filtered_matches)), len(filtered_matches)
 
     def get_api_part(self, mouser_part):
         mouser_part_number = mouser_part.get("MouserPartNumber")
