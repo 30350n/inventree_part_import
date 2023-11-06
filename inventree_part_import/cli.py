@@ -116,6 +116,8 @@ def inventree_part_import(
         error_helper.INFO_END = "\r"
     inventree_api = setup_inventree_api()
 
+    # make sure suppliers.yaml exists
+    get_suppliers()
     setup_supplier_companies(inventree_api)
     importer = PartImporter(inventree_api)
 
