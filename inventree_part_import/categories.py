@@ -115,7 +115,7 @@ def setup_categories_and_parameters(inventree_api):
             })
 
     for part_category_path, template_name in part_category_parameter_templates:
-        if (part_category, template_name) not in category_parameters:
+        if (part_category_path, template_name) not in category_parameters:
             warning(
                 f"parameter template '{template_name}' for '{'/'.join(part_category_path)}' "
                 f"on host is not defined in {CATEGORIES_CONFIG}"
