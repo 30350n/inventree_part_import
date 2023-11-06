@@ -29,7 +29,7 @@ $ inventree_part_import parts.csv
 
 ## Configuration
 
-#### `inventree.yaml`
+### `inventree.yaml`
 
 This file is used to configure authentication to your InvenTree host.
 It has two parameters:
@@ -37,7 +37,7 @@ It has two parameters:
 - `host`: the host url to connect to (including port, if required)
 - `token`: the user token to authenticate with (this will be retrieved automatically by the CLI)
 
-#### `config.yaml`
+### `config.yaml`
 
 This file is used to configure general settings of the CLI tool, as well as default locales.
 The following parameters have to be set:
@@ -47,7 +47,7 @@ The following parameters have to be set:
 - `location`: the default location to use when searching suppliers (ISO3166 code)
 - `scrape`: whether or not web page scraping is allowed (this can get you temporarily blocked)
 
-#### `suppliers.yaml`
+### `suppliers.yaml`
 
 This file is used to configure supplier specific behavior.
 The following parameters are always available:
@@ -59,7 +59,7 @@ The following parameters are always available:
 Additionally suppliers can have extra parameters for authentifcation to their respective APIs.
 These can be set via the CLI like so: `inventree_part_import --configure <supplier>`.
 
-#### `categories.yaml`
+### `categories.yaml`
 
 This file should specify all your InvenTree categories, as well as meta information like
 category aliases, parameters, etc.
@@ -106,11 +106,11 @@ Products:
     _ignore: true # this category contains our own products, so we won't import anything into it
 ```
 
-#### `parameters.yaml`
+### `parameters.yaml`
 
 TODO ...
 
-#### Pre Creation Hooks (`hooks.py`)
+### Pre Creation Hooks (`hooks.py`)
 
 Pre creation hooks are functions that get run after part information has been parsed from a
 supplier, but before the InvenTree part gets created. They basically let you modify a part,
