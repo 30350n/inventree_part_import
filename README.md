@@ -61,7 +61,50 @@ These can be set via the CLI like so: `inventree_part_import --configure <suppli
 
 #### `categories.yaml`
 
-TODO ...
+This file should specify all your InvenTree categories, as well as meta information like
+category aliases, parameters, etc.
+
+It's defined as hierarchical tree structure where every 'node' represents a category.
+For example:
+
+```yaml
+Electronics:
+    Capacitors:
+        Ceramic:
+        Electrolytic:
+Products:
+```
+
+Additionally you can define the following special attributes (starting with `_`):
+
+- `_aliases` has to be a list of supplier category names which will be mapped to that category
+- `_description` specifies the categories description (defaults to category name)
+- `_ignore` makes `inventree_part_import` ignore that category, as well as any subcategories
+- `_parameters` has to be a list of parameter names (for parameters defined in
+  [`parameters.yaml`](#parametersyaml)) this category uses<br>
+  **note: parameters get inherited by sub categories**
+- `_structural` can be set to `true` to make the category structural
+
+Here's an example for a config with special attributes:
+
+```yaml
+Electronics:
+    _description: Electronic Components # custom description
+    _structural: true # no parts are allowed to be directly in this category
+    Capacitors:
+        _parameters: # parameters for both the 'Ceramic' and 'Electrolytic' categories
+            - Capacitance
+            - Tolerance
+        Ceramic:
+        Electrolytic:
+            _aliases: # category names mapped to this category from various suppliers
+                - Aluminum Electrolytic Capacitors
+                - Aluminum Electrolytic Capacitors - SMD
+                - Aluminum Electrolytic Capacitors - Leaded
+                - Electrolyte Capacitors
+Products:
+    _ignore: true # this category contains our own products, so we won't import anything into it
+```
 
 #### `parameters.yaml`
 
