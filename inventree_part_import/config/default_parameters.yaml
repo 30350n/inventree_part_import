@@ -1,0 +1,126 @@
+Capacitance:
+Color:
+    _aliases:
+        - Illumination Type, Color
+        - Illumination Colour
+        - Luminous Color
+        - Emitted Color
+Connector Type:
+    _aliases:
+        - Product Type
+        - Type
+ESR:
+    _aliases:
+        - ESR (Equivalent Series Resistance)
+        - Equivalent Series Resistance(ESR)
+Forward Voltage:
+    _aliases:
+        - Voltage - Forward (Vf) (Typ)
+        - Voltage - Forward (Vf) (Max) @ If
+        - Vf - Forward Voltage
+Frequency:
+    _aliases:
+        - Frequency - Max
+        - Frequency - Switching
+        - Clock Frequency
+Gain (hFE):
+    _aliases:
+        - DC Current Gain (hFE) (Min) @ Ic, Vce
+        - DC Current Gain (hFE@Ic,Vce)
+Impedance:
+    _aliases:
+        - Impedance @ Frequency
+Inductance:
+Input Voltage:
+    _aliases:
+        - Voltage - Input
+Mounting Type:
+    _aliases:
+        - Mounting Style
+Number of Contacts:
+    _aliases:
+        - Number of Positions
+        - Number of Positions or Pins (Grid)
+        - Number of Tie Points (Total)
+        - Number of contacts points
+        - Number of pins
+Number of Rows:
+Output Current:
+    _aliases:
+        - Current - Output
+        - Current - Output Source/Sink
+        - Current - Output (Max)
+        - Current - Output / Channel
+        - Current - Output High, Low
+Output Polarity:
+    _aliases:
+        - Output Configuration
+Output Type:
+Output Voltage:
+    _aliases:
+        - Voltage - Output (Min/Fixed)
+        - Voltage - Output 1
+Package Type:
+    _aliases:
+        - Package / Case
+        - Termination Style
+        - Mounting form
+Pitch:
+    _aliases:
+        - Pitch - Mating
+        - Contacts pitch
+Polarization:
+Rated Current:
+    _aliases:
+        - Current Rating
+        - Current Rating (Amps)
+        - Current Rating (Max)
+        - Contact Rating @ Voltage
+        - Contact Rating
+        - Current Rating (DC)
+        - Current Rating (AC)
+        - Contact Current
+Rated Power:
+    _aliases:
+        - Power (Watts)
+        - Power - Max
+        - Power Rating
+        - Power(Watts)
+        - Power Dissipation
+        - Power Dissipation (Pd)
+Rated Voltage:
+    _aliases:
+        - Voltage - Rated
+        - Voltage Rated
+        - Voltage - Max
+        - Voltage Rating
+        - Voltage Rating DC
+        - Voltage Rating - DC
+        - Voltage Rating (DC)
+        - Voltage Rating AC
+        - Voltage Rating - AC
+        - Voltage Rating (AC)
+        - Voltage Rating (Max)
+Resistance:
+    _aliases:
+        - Resistance (Ohms)
+        - Resistor
+Reverse Breakdown Voltage:
+    _aliases:
+        - Voltage - DC Reverse (Vr) (Max)
+        - Voltage - Zener (Nom) (Vz)
+        - Zener Voltage (Nom)
+Size:
+    _aliases:
+        - Size / Dimension
+        - Lens Size
+Supply Voltage:
+    _aliases:
+        - Voltage - Supply
+        - Voltage - Supply Span (Max)
+        - Voltage - Supply (Vcc/Vdd)
+        - Voltage - Supply, Single (V+)
+        - Voltage - Supply, Dual (V±)
+Temperature Coefficient:
+Tolerance:
+Type:

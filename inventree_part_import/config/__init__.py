@@ -134,7 +134,7 @@ def _get_config_file(config_path: Path):
         info(f"failed to find {config_path.name} config file", end="\n")
         new_configuration_hint()
         if prompt_yes_or_no("copy the default configuration file?", default_is_yes=True):
-            shutil.copy(PARENT_DIR / config_path.name, config_path)
+            shutil.copy(PARENT_DIR / f"default_{config_path.name}", config_path)
         else:
             return None
 
