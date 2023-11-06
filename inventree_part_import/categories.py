@@ -17,12 +17,13 @@ def setup_categories_and_parameters(inventree_api):
 
     used_parameters = set.union(set(), *(set(c.parameters) for c in categories.values()))
 
-    for parameter in used_parameters:
-        if parameter not in parameters:
-            error(f"parameter '{parameter}' not defined in {PARAMETERS_CONFIG}")
-            return None, None
-        if parameter not in used_parameters:
-            warning(f"parameter '{parameter}' is defined, but not being used")
+    for name in parameters:
+        if name not in used_parameters:
+            warning(f"parameter '{name}' is defined in {CATEGORIES_CONFIG} but not being used")
+    for name in used_parameters:
+        if name not in parameters:
+            warning(f"parameter '{name}' not defined in {PARAMETERS_CONFIG}")
+            parameters[name] = Parameter(name, name, [], "")
 
     part_categories = {
         tuple(part_category.pathstring.split("/")): part_category
@@ -88,7 +89,7 @@ def setup_categories_and_parameters(inventree_api):
             })
 
     for parameter_template in parameter_templates:
-        if parameter_template not in parameters:
+        if parameter_template not in used_parameters:
             warning(
                 f"parameter template '{parameter_template}' on host "
                 f"is not defined in {CATEGORIES_CONFIG}"
@@ -113,11 +114,12 @@ def setup_categories_and_parameters(inventree_api):
                 "parameter_template": parameter_templates[parameter].pk,
             })
 
-    for part_category, parameter_template in part_category_parameter_templates:
-        if (part_category, parameter_template) not in category_parameters:
+    for part_category_path, template_name in part_category_parameter_templates:
+        if (part_category, template_name) not in category_parameters:
             warning(
-                f"parameter template '{parameter_template}' for '{'/'.join(part_category)}' "
-                f"on host is not defined in {CATEGORIES_CONFIG}")
+                f"parameter template '{template_name}' for '{'/'.join(part_category_path)}' "
+                f"on host is not defined in {CATEGORIES_CONFIG}"
+            )
 
     category_map = {}
     ignore = set()
