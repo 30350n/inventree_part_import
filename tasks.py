@@ -76,7 +76,7 @@ def start_server(c, debug=False):
 @task
 def stop_server(c, debug=False):
     print("stopping server ...", end=" ")
-    c.run('docker-compose -f test/docker-compose.yml down', hide=None if debug else 'both')
+    c.run(f"{DOCKER_COMPOSE_CMD} down", hide=None if debug else "both")
     print("done.")
 
 @task
