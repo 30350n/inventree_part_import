@@ -28,15 +28,19 @@ class Mouser(Supplier):
         if not (parts := response.get("SearchResults", {}).get("Parts")):
             return [], 0
 
+        valid_parts = [part for part in parts if part.get("MouserPartNumber", "N/A") != "N/A"]
+
         search_term_lower = search_term.lower()
         filtered_matches = [
-            part for part in parts
-            if part.get("ManufacturerPartNumber", "").lower().startswith(search_term_lower)
+            part for part in valid_parts
+            if part.get("MouserPartNumber", "").lower().startswith(search_term_lower)
+            or part.get("ManufacturerPartNumber", "").lower().startswith(search_term_lower)
         ]
 
         exact_matches = [
             part for part in filtered_matches
-            if part.get("ManufacturerPartNumber", "").lower() == search_term_lower
+            if part.get("MouserPartNumber", "").lower() == search_term_lower
+            or part.get("ManufacturerPartNumber", "").lower() == search_term_lower
         ]
         if exact_matches:
             filtered_matches = exact_matches
