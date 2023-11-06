@@ -150,7 +150,9 @@ def load_tabular_data(path: Path):
                 reverse=True,
             )
 
-            if sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
+            if len(sorted_headers) == 0:
+                column_index = 0
+            elif sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
                 column_index = headers[sorted_headers[0]]
             else:
                 prompt("\nselect the column to import:", end="\n")
