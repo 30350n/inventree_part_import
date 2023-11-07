@@ -25,7 +25,7 @@ class Mouser(Supplier):
         response = search_request.get_response()
         if not isinstance(response, dict):
             return [], 0
-        if not (parts := response.get("SearchResults", {}).get("Parts")):
+        if not ((results := response.get("SearchResults")) and (parts := results.get("Parts"))):
             return [], 0
 
         valid_parts = [part for part in parts if part.get("MouserPartNumber", "N/A") != "N/A"]
