@@ -80,6 +80,9 @@ class LCSC(Supplier):
             )))
             supplier_link = f"https://www.lcsc.com/product-detail/{product_url_id}.html"
 
+        product_arrange = lcsc_part.get("productArrange")
+        packaging = REMOVE_HTML_TAGS.sub("", product_arrange) if product_arrange else ""
+
         category_path = []
         if parent := lcsc_part.get("parentCatalogName"):
             category_path.append(parent)
@@ -116,7 +119,7 @@ class LCSC(Supplier):
             manufacturer_link="",
             MPN=lcsc_part.get("productModel", ""),
             quantity_available=float(lcsc_part.get("stockNumber", 0)),
-            packaging=REMOVE_HTML_TAGS.sub("", lcsc_part.get("productArrange", "")),
+            packaging=packaging,
             category_path=category_path,
             parameters=parameters,
             price_breaks=price_breaks,
