@@ -4,11 +4,13 @@ import re
 
 from inventree.api import InvenTreeAPI
 from inventree.base import ImageMixin, InventreeObject
-from inventree.company import Company as InventreeCompany, ManufacturerPart, SupplierPart
-from inventree.part import Part, ParameterTemplate
+from inventree.company import Company as InventreeCompany
+from inventree.company import ManufacturerPart, SupplierPart
+from inventree.part import ParameterTemplate, Part
 from platformdirs import user_cache_path
 import requests
 from requests.compat import urlparse
+from requests.exceptions import HTTPError
 
 from .error_helper import *
 
@@ -115,6 +117,7 @@ def upload_image(api_object: ImageMixin, image_url: str):
 DOWNLOAD_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 from ssl import PROTOCOL_TLSv1_2
+
 class TLSv1_2HTTPAdapter(requests.adapters.HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(
@@ -146,26 +149,35 @@ class Company:
     primary_key: int = None
 
     def setup(self, inventree_api):
+        api_company = None
         if self.primary_key is not None:
-            api_company = InventreeCompany(inventree_api, self.primary_key)
-        elif api_companies := InventreeCompany.list(inventree_api, name=self.name):
-            api_company = api_companies[0]
-        else:
-            info(f"creating supplier '{self.name}' ...")
-            return InventreeCompany.create(inventree_api, {
-                "name": self.name,
-                "currency": self.currency,
-                "is_supplier": self.is_supplier,
-                "is_manufacturer": self.is_manufacturer,
-                "is_customer": self.is_customer,
-            })
+            try:
+                api_company = InventreeCompany(inventree_api, self.primary_key)
+            except HTTPError as e:
+                if not e.args or e.args[0].get("status_code") != 404:
+                    raise e
 
-        if self.name != api_company.name:
-            info(f"updating name for '{api_company.name}' ...")
-            api_company.save(data={"name": self.name})
+        if not api_company:
+            api_companies = InventreeCompany.list(inventree_api, name=self.name)
+            if len(api_companies) == 1:
+                api_company = api_companies[0]
 
-        if self.currency != api_company.currency:
-            info(f"updating currency for '{self.name}' ...")
-            api_company.save(data={"currency": self.currency})
+        if api_company:
+            if self.name != api_company.name:
+                info(f"updating name for '{api_company.name}' ...")
+                api_company.save({"name": self.name})
 
-        return api_company
+            if self.currency != api_company.currency:
+                info(f"updating currency for '{self.name}' ...")
+                api_company.save({"currency": self.currency})
+
+            return api_company
+
+        info(f"creating supplier '{self.name}' ...")
+        return InventreeCompany.create(inventree_api, {
+            "name": self.name,
+            "currency": self.currency,
+            "is_supplier": self.is_supplier,
+            "is_manufacturer": self.is_manufacturer,
+            "is_customer": self.is_customer,
+        })
