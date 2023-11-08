@@ -33,7 +33,7 @@ class TME(Supplier):
             tme_part for tme_part in filtered_matches
             if tme_part["OriginalSymbol"].lower() == search_term.lower()
         ]
-        if exact_matches:
+        if len(exact_matches) == 1:
             filtered_matches = exact_matches
 
         tme_stocks = self.tme_api.get_prices_and_stocks([m["Symbol"] for m in filtered_matches])

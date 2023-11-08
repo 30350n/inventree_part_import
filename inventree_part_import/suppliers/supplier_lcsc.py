@@ -51,8 +51,8 @@ class LCSC(Supplier):
                 ]
                 exact_matches = exact_filtered if exact_filtered else exact_matches
 
-            if exact_matches:
-                filtered_matches = exact_matches
+            if len(exact_matches) == 1:
+                return [self.get_api_part(exact_matches[0])], 1
 
             return list(map(self.get_api_part, filtered_matches)), len(filtered_matches)
 

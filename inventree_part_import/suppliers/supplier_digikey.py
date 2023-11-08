@@ -5,8 +5,8 @@ import digikey
 from digikey.v3.productinformation import KeywordSearchRequest, ProductDetailsResponse
 from platformdirs import user_cache_path
 
-from .base import ApiPart, Supplier
 from .. import __package__ as parent_package
+from .base import ApiPart, Supplier
 
 DIGIKEY_CACHE = user_cache_path(parent_package, ensure_exists=True) / "digikey"
 DIGIKEY_CACHE.mkdir(parents=True, exist_ok=True)
@@ -57,9 +57,8 @@ class DigiKey(Supplier):
             digikey_part for digikey_part in filtered_results
             if digikey_part.manufacturer_part_number.lower() == search_term.lower()
         ]
-        if exact_matches:
-            filtered_results = exact_matches
-            product_count = len(exact_matches)
+        if len(exact_matches) == 1:
+            return [self.get_api_part(exact_matches[0])], 1
 
         return list(map(self.get_api_part, filtered_results)), product_count
 
