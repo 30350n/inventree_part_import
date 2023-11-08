@@ -46,6 +46,8 @@ The following parameters have to be set:
 - `language`: the default language to use when searching suppliers (ISO639 code)
 - `location`: the default location to use when searching suppliers (ISO3166 code)
 - `scrape`: whether or not web page scraping is allowed (this can get you temporarily blocked)
+- `max_results`: the maximum number of results to display in interactive mode
+  (set to null to disable)
 
 ### `suppliers.yaml`
 

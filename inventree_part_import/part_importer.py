@@ -8,7 +8,7 @@ from inventree.part import Parameter, Part
 import requests
 
 from .categories import setup_categories_and_parameters
-from .config import CATEGORIES_CONFIG, get_pre_creation_hooks
+from .config import CATEGORIES_CONFIG, get_config, get_pre_creation_hooks
 from .error_helper import *
 from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
                                 get_parameter_templates, get_part, get_supplier_part,
@@ -59,6 +59,7 @@ class PartImporter:
             elif self.interactive:
                 prompt(f"found multiple parts at {supplier.name}, select which one to import:",
                     end="\n")
+                results = results[:get_config().get("max_results", 10)]
                 if result_count > len(results):
                     hint(f"found {result_count} results, only showing the first {len(results)}")
                 if not (api_part := self.select_api_part(results)):

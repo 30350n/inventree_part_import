@@ -115,6 +115,7 @@ def get_config():
         "language": language,
         "location": location,
         "scraping": scraping,
+        "max_results": 10,
     }
     with config.open("w", encoding="utf-8") as file:
         yaml.safe_dump(_CONFIG_LOADED, file, sort_keys=False)
