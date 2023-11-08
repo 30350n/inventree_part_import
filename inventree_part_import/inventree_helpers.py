@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import cache
-from pathlib import Path
+import re
 
 from inventree.api import InvenTreeAPI
 from inventree.base import ImageMixin, InventreeObject
@@ -32,12 +32,16 @@ def get_manufacturer_part(inventree_api: InvenTreeAPI, mpn):
     return None
 
 def get_part(inventree_api: InvenTreeAPI, name):
-    parts = Part.list(inventree_api, name_regex=f"^{name}$")
+    name_sanitized = FILTER_SPECIAL_CHARS_REGEX.sub(FILTER_SPECIAL_CHARS_SUB, name)
+    parts = Part.list(inventree_api, name_regex=f"^{name_sanitized}$")
     if len(parts) == 1:
         return parts[0]
 
     assert len(parts) == 0
     return None
+
+FILTER_SPECIAL_CHARS_REGEX = re.compile(r"([^\\])([\[\].^$*+?{}|()])")
+FILTER_SPECIAL_CHARS_SUB = r"\g<1>\\\g<2>"
 
 def update_object_data(obj: InventreeObject, data: dict, info_label=""):
     for name, value in data.items():
