@@ -19,7 +19,11 @@ from .suppliers.base import ApiPart
 class ImportResult(Enum):
     ERROR = 0
     FAILURE = 1
-    SUCCESS = 2
+    INCOMPLETE = 2
+    SUCCESS = 3
+
+    def __or__(self, other):
+        return self if self.value < other.value else other
 
 class PartImporter:
     def __init__(self, inventree_api, interactive=False):
@@ -38,7 +42,8 @@ class PartImporter:
         }
 
     def import_part(self, search_term, supplier_id=None, only_supplier=False):
-        import_success = False
+        info(f"searching for {search_term} ...", end="\n")
+        import_result = ImportResult.SUCCESS
 
         self.existing_manufacturer_part = None
         for supplier, async_results in search(search_term, supplier_id, only_supplier):
@@ -57,20 +62,21 @@ class PartImporter:
                 if result_count > len(results):
                     hint(f"found {result_count} results, only showing the first {len(results)}")
                 if not (api_part := self.select_api_part(results)):
+                    import_result |= ImportResult.INCOMPLETE
                     continue
             else:
                 warning(f"found {result_count} parts at {supplier.name}, skipping import")
+                import_result |= ImportResult.INCOMPLETE
                 continue
 
-            match self.import_supplier_part(supplier, api_part):
-                case ImportResult.ERROR:
-                    return False
-                case ImportResult.FAILURE:
-                    pass
-                case ImportResult.SUCCESS:
-                    import_success = True
+            import_result |= self.import_supplier_part(supplier, api_part)
+            if import_result == ImportResult.ERROR:
+                return import_result
 
-        return import_success
+        if not self.existing_manufacturer_part:
+            import_result |= ImportResult.FAILURE
+
+        return import_result
 
     @staticmethod
     def select_api_part(api_parts: list[ApiPart]):

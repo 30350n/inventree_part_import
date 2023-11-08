@@ -10,7 +10,7 @@ from . import error_helper
 from .config import (SUPPLIERS_CONFIG, get_config_dir, set_config_dir, setup_inventree_api,
                      update_config_file, update_supplier_config)
 from .error_helper import *
-from .part_importer import PartImporter
+from .part_importer import ImportResult, PartImporter
 from .suppliers import get_suppliers, setup_supplier_companies
 
 def handle_keyboard_interrupt(func):
@@ -130,16 +130,42 @@ def inventree_part_import(
     setup_supplier_companies(inventree_api)
     importer = PartImporter(inventree_api, interactive=interactive == "true")
 
-    for part in parts.copy():
-        info(f"searching for {part} ...", end="\n")
-        if importer.import_part(part, supplier, only_supplier):
-            parts.remove(part)
-        print()
+    failed_parts = []
+    incomplete_parts = []
 
-    if parts:
-        failed_parts_str = "\n".join(parts)
-        warning(f"failed to import the following parts:\n{failed_parts_str}")
-    else:
+    try:
+        for part in parts:
+            match importer.import_part(part, supplier, only_supplier):
+                case ImportResult.ERROR | ImportResult.FAILURE:
+                    failed_parts.append(part)
+                case ImportResult.INCOMPLETE:
+                    incomplete_parts.append(part)
+            print()
+
+        if interactive == "twice":
+            success("reimporting failed/incomplete parts in interactive mode ...\n", prefix="")
+            parts2 = (*failed_parts, *incomplete_parts)
+            failed_parts = []
+            incomplete_parts = []
+
+            importer.interactive = True
+            for part in parts2:
+                match importer.import_part(part, supplier, only_supplier):
+                    case ImportResult.ERROR | ImportResult.FAILURE:
+                        failed_parts.append(part)
+                    case ImportResult.INCOMPLETE:
+                        incomplete_parts.append(part)
+                print()
+
+    finally:
+        if failed_parts:
+            failed_parts_str = "\n".join(failed_parts)
+            error(f"the following parts failed to import:\n{failed_parts_str}", prefix="")
+        if incomplete_parts:
+            incomplete_parts_str = "\n".join(incomplete_parts)
+            warning(f"the following parts are incomplete:\n{incomplete_parts_str}", prefix="")
+
+    if not failed_parts and not incomplete_parts:
         success("imported all parts!")
 
 MPN_HEADERS = ("Manufacturer Part Number", "MPN")
