@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import cache
 import inspect
 from inspect import _empty
 import re
@@ -69,8 +70,12 @@ class Supplier:
             if name != "self"
         }
 
-    def search(self, search_term: str) -> ([ApiPart], int):
+    def search(self, search_term: str) -> (list[ApiPart], int):
         raise NotImplementedError()
+
+    @cache
+    def cached_search(self, search_term: str) -> (list[ApiPart], int):
+        return self.search(search_term)
 
     @property
     def name(self):

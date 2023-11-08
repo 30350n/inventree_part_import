@@ -35,7 +35,7 @@ def search(search_term, supplier_id: str = None, only_supplier=False):
 
     thread_pool = ThreadPool(processes=8)
     return [
-        (api_company, thread_pool.apply_async(supplier_object.search, (search_term,)))
+        (api_company, thread_pool.apply_async(supplier_object.cached_search, (search_term,)))
         for supplier_object, api_company in suppliers
     ]
 
