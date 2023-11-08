@@ -25,11 +25,17 @@ _suppliers, _available_suppliers = get_suppliers(setup=False)
 SuppliersChoices = click.Choice(_suppliers.keys(), case_sensitive=False)
 AvailableSuppliersChoices = click.Choice(_available_suppliers.keys(), case_sensitive=False)
 
+InteractiveChoices = click.Choice(("false", "true", "twice"), case_sensitive=False)
+
 @click.command
 @click.pass_context
 @click.argument("inputs", nargs=-1)
 @click.option("-s", "--supplier", type=SuppliersChoices, help="Search this supplier first.")
 @click.option("-o", "--only", type=SuppliersChoices, help="Only search this supplier.")
+@click.option("-i", "--interactive", type=InteractiveChoices, default="false", help=(
+    "Enable interactive mode. 'twice' will run once normally, then rerun in interactive "
+    "mode for any parts that failed to import correctly."
+))
 @click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
@@ -40,6 +46,7 @@ def inventree_part_import(
     inputs,
     supplier=None,
     only=None,
+    interactive="false",
     config_dir=False,
     verbose=False,
     show_config_dir=False,
@@ -121,7 +128,7 @@ def inventree_part_import(
     # make sure suppliers.yaml exists
     get_suppliers(reload=True)
     setup_supplier_companies(inventree_api)
-    importer = PartImporter(inventree_api)
+    importer = PartImporter(inventree_api, interactive=interactive == "true")
 
     for part in parts.copy():
         info(f"searching for {part} ...", end="\n")

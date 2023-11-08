@@ -2,6 +2,7 @@ from enum import Enum
 from multiprocessing.pool import ThreadPool
 import re
 
+from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
 from inventree.part import Parameter, Part
 import requests
@@ -21,8 +22,9 @@ class ImportResult(Enum):
     SUCCESS = 2
 
 class PartImporter:
-    def __init__(self, inventree_api):
+    def __init__(self, inventree_api, interactive=False):
         self.api = inventree_api
+        self.interactive = interactive
 
         # preload pre_creation_hooks
         get_pre_creation_hooks()
@@ -35,7 +37,7 @@ class PartImporter:
             for category in self.category_map.values()
         }
 
-    def import_part(self, search_term, supplier_id=None, only_supplier=False, import_all=False):
+    def import_part(self, search_term, supplier_id=None, only_supplier=False):
         import_success = False
 
         self.existing_manufacturer_part = None
@@ -46,28 +48,51 @@ class PartImporter:
             if not results:
                 hint(f"no results at {supplier.name}")
                 continue
-            if len(results) > 1 and not import_all:
+
+            if len(results) == 1:
+                api_part = results[0]
+            elif self.interactive:
+                prompt(f"found multiple parts at {supplier.name}, select which one to import:",
+                    end="\n")
+                if result_count > len(results):
+                    hint(f"found {result_count} results, only showing the first {len(results)}")
+                if not (api_part := self.select_api_part(results)):
+                    continue
+            else:
                 warning(f"found {result_count} parts at {supplier.name}, skipping import")
                 continue
 
-            if result_count > len(results):
-                hint(
-                    f"found {result_count} parts at {supplier.name}, only importing "
-                    f"{len(results)}"
-                )
-
-            for api_part in results:
-                if import_all:
-                    self.existing_manufacturer_part = None
-                match self.import_supplier_part(supplier, api_part):
-                    case ImportResult.ERROR:
-                        return False
-                    case ImportResult.FAILURE:
-                        pass
-                    case ImportResult.SUCCESS:
-                        import_success = True
+            match self.import_supplier_part(supplier, api_part):
+                case ImportResult.ERROR:
+                    return False
+                case ImportResult.FAILURE:
+                    pass
+                case ImportResult.SUCCESS:
+                    import_success = True
 
         return import_success
+
+    @staticmethod
+    def select_api_part(api_parts: list[ApiPart]):
+        mpns = [api_part.MPN for api_part in api_parts]
+        max_mpn_length = max(len(mpn) for mpn in mpns)
+        mpns = [mpn.ljust(max_mpn_length) for mpn in mpns]
+
+        manufacturers = [api_part.manufacturer for api_part in api_parts]
+        max_manufacturer_length = max(len(man) for man in manufacturers)
+        manufacturers = [man.ljust(max_manufacturer_length) for man in manufacturers]
+
+        skus = [api_part.SKU for api_part in api_parts]
+        max_sku_length = max(len(sku) for sku in skus)
+        skus = [sku.ljust(max_sku_length) for sku in skus]
+
+        links = [f"({api_part.supplier_link})" for api_part in api_parts]
+
+        choices = [*map(" ".join, zip(map(" | ".join, zip(mpns, manufacturers, skus)), links))]
+        choices.append("Skip ...")
+
+        index = select(choices, deselected_prefix="  ", selected_prefix="> ")
+        return [*api_parts, None][index]
 
     def import_supplier_part(self, supplier: Company, api_part: ApiPart):
         part = None
