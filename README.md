@@ -61,6 +61,21 @@ The following parameters are always available:
 Additionally suppliers can have extra parameters for authentifcation to their respective APIs.
 These can be set via the CLI like so: `inventree_part_import --configure <supplier>`.
 
+#### DigiKey
+
+For getting a DigiKey API key, follow the instructions
+[here](https://github.com/peeter123/digikey-api#register).
+Be sure to use a [Production App](https://developer.digikey.com/documentation/organization),
+**not the Sandbox API!**
+
+#### Mouser
+
+Request a **Search API** key from the [mouser api hub](https://www.mouser.com/api-hub/).
+
+#### TME
+
+Request an API key at the [developers page](https://developers.tme.eu/).
+
 ### `categories.yaml`
 
 This file should specify all your InvenTree categories, as well as meta information like
