@@ -84,7 +84,7 @@ class PartImporter:
         max_mpn_length = max(len(mpn) for mpn in mpns)
         mpns = [mpn.ljust(max_mpn_length) for mpn in mpns]
 
-        manufacturers = [api_part.manufacturer for api_part in api_parts]
+        manufacturers = [str(api_part.manufacturer) for api_part in api_parts]
         max_manufacturer_length = max(len(man) for man in manufacturers)
         manufacturers = [man.ljust(max_manufacturer_length) for man in manufacturers]
 
