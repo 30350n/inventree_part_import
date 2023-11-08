@@ -22,10 +22,11 @@ def handle_keyboard_interrupt(func):
     return wrapper
 
 _suppliers, _available_suppliers = get_suppliers(setup=False)
-SuppliersChoices = click.Choice(_suppliers.keys())
-AvailableSuppliersChoices = click.Choice(_available_suppliers.keys())
+SuppliersChoices = click.Choice(_suppliers.keys(), case_sensitive=False)
+AvailableSuppliersChoices = click.Choice(_available_suppliers.keys(), case_sensitive=False)
 
 @click.command
+@click.pass_context
 @click.argument("inputs", nargs=-1)
 @click.option("-s", "--supplier", type=SuppliersChoices, help="Search this supplier first.")
 @click.option("-o", "--only", type=SuppliersChoices, help="Only search this supplier.")
@@ -35,6 +36,7 @@ AvailableSuppliersChoices = click.Choice(_available_suppliers.keys())
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
 @handle_keyboard_interrupt
 def inventree_part_import(
+    context,
     inputs,
     supplier=None,
     only=None,
@@ -84,7 +86,7 @@ def inventree_part_import(
         return
 
     if not inputs:
-        click.echo(click.get_current_context().get_help())
+        click.echo(context.get_help())
         return
 
     only_supplier = False
