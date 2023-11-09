@@ -5,9 +5,10 @@ from bs4 import BeautifulSoup
 from requests import Session
 from requests.compat import quote
 
+from ..config import get_config
 from ..error_helper import *
 from .base import ApiPart, Supplier, money2float
-from .scrape import REQUEST_TIMEOUT, scrape
+from .scrape import scrape
 
 BASE_URL = "https://reichelt.com/"
 LOCALE_CHANGE_URL = f"{BASE_URL}index.html?ACTION=12&PAGE=46"
@@ -185,12 +186,13 @@ class Reichelt(Supplier):
         return True
 
     def setup_hook(self, session: Session):
-        form_page = session.get(LOCALE_CHANGE_URL, timeout=REQUEST_TIMEOUT)
+        request_timeout = get_config()["request_timeout"]
+        form_page = session.get(LOCALE_CHANGE_URL, timeout=request_timeout)
         if form_page.status_code == 200:
             soup = BeautifulSoup(form_page.content, "html.parser")
             form_url = soup.find("form", attrs={"name": "contentform"}).attrs["action"]
 
-            result = session.post(form_url, timeout=REQUEST_TIMEOUT, data={
+            result = session.post(form_url, timeout=request_timeout, data={
                 "CCOUNTRY": LOCATION_MAP[self.location],
                 "LANGUAGE": self.language,
                 "CTYPE": 1,

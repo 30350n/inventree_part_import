@@ -46,6 +46,8 @@ set_config_dir(user_config_path(parent_package))
 
 INVENTREE_CONFIG = "inventree.yaml"
 def setup_inventree_api():
+    api_timeout = get_config()["request_timeout"]
+
     inventree_config = _CONFIG_DIR / INVENTREE_CONFIG
     info("setting up InvenTree API ...")
     if inventree_config.is_file():
@@ -53,7 +55,7 @@ def setup_inventree_api():
         try:
             config = yaml.safe_load(inventree_config.read_text(encoding="utf-8"))
             host = config.get("host")
-            return InvenTreeAPI(host=host, token=config.get("token"))
+            return InvenTreeAPI(host=host, token=config.get("token"), timeout=api_timeout)
         except MarkedYAMLError as e:
             error(e, prefix="")
         except (ConnectionError, TimeoutError) as e:
@@ -72,7 +74,11 @@ def setup_inventree_api():
         password = secure_input("password:").strip()
         try:
             inventree_api = InvenTreeAPI(
-                host, username=username, password=password, use_token_auth=True,
+                host,
+                username=username,
+                password=password,
+                use_token_auth=True,
+                timeout=api_timeout,
             )
         except (ConnectionError, TimeoutError) as e:
             error(f"failed to connect to '{host}' with '{e}'")
@@ -82,6 +88,12 @@ def setup_inventree_api():
     success(f"wrote API configuration to '{inventree_config}'")
 
     return inventree_api
+
+DEFAULT_CONFIG_VARS = {
+    "max_results": 10,
+    "request_timeout": 15.0,
+    "retry_timeout": 3.0,
+}
 
 _CONFIG_LOADED = None
 CONFIG = "config.yaml"
@@ -94,6 +106,7 @@ def get_config():
     if config.is_file():
         try:
             _CONFIG_LOADED = yaml.safe_load(config.read_text(encoding="utf-8"))
+            _CONFIG_LOADED.update(DEFAULT_CONFIG_VARS)
             return _CONFIG_LOADED
         except MarkedYAMLError as e:
             error(e, prefix="")
@@ -115,7 +128,7 @@ def get_config():
         "language": language,
         "location": location,
         "scraping": scraping,
-        "max_results": 10,
+        **DEFAULT_CONFIG_VARS,
     }
     with config.open("w", encoding="utf-8") as file:
         yaml.safe_dump(_CONFIG_LOADED, file, sort_keys=False)

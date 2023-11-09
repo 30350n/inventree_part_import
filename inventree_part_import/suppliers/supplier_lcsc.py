@@ -2,9 +2,10 @@ import re
 
 from requests import Session
 
+from ..config import get_config
 from ..error_helper import *
 from .base import ApiPart, Supplier
-from .scrape import REQUEST_TIMEOUT, scrape
+from .scrape import scrape
 
 API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
 CURRENCY_URL     = f"{API_BASE_URL}home/currency?currencyCode={{}}"
@@ -127,7 +128,7 @@ class LCSC(Supplier):
         )
 
     def setup_hook(self, session: Session):
-        session.get(CURRENCY_URL.format(self.currency), timeout=REQUEST_TIMEOUT)
+        session.get(CURRENCY_URL.format(self.currency), timeout=get_config()["request_timeout"])
 
 REMOVE_HTML_TAGS = re.compile(r"<.*?>")
 
