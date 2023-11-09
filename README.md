@@ -1,3 +1,6 @@
+[![python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
+[![mit](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+
 # InvenTree Part Import
 
 This project offers a command line interface to easily import parts from suppliers like
@@ -70,11 +73,11 @@ Be sure to use a [Production App](https://developer.digikey.com/documentation/or
 
 #### Mouser
 
-Request a **Search API** key from the [mouser api hub](https://www.mouser.com/api-hub/).
+Request a **Search API** key from the [Mouser API Hub](https://www.mouser.com/api-hub/).
 
 #### TME
 
-Request an API key at the [developers page](https://developers.tme.eu/).
+Request an API key at the [Developers Page](https://developers.tme.eu/).
 
 ### `categories.yaml`
 
