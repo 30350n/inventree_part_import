@@ -2,6 +2,7 @@ from pathlib import Path
 
 import click
 from cutie import select
+from requests.exceptions import HTTPError, Timeout
 from tablib import import_set
 from tablib.exceptions import TablibException, UnsupportedFormat
 from thefuzz import fuzz
@@ -13,12 +14,16 @@ from .error_helper import *
 from .part_importer import ImportResult, PartImporter
 from .suppliers import get_suppliers, setup_supplier_companies
 
-def handle_keyboard_interrupt(func):
+def handle_errors(func):
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
         except KeyboardInterrupt:
             error("Aborting Execution! (KeyboardInterrupt)", prefix="")
+        except Timeout as e:
+            error(f"connection timed out ({e})", prefix="FATAL: ")
+        except HTTPError as e:
+            error(f"HTTP error ({e})", prefix="FATAL: ")
     return wrapper
 
 _suppliers, _available_suppliers = get_suppliers(setup=False)
@@ -40,7 +45,7 @@ InteractiveChoices = click.Choice(("false", "true", "twice"), case_sensitive=Fal
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
-@handle_keyboard_interrupt
+@handle_errors
 def inventree_part_import(
     context,
     inputs,
