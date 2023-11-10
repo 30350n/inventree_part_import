@@ -34,10 +34,10 @@ def search(search_term, supplier_id: str = None, only_supplier=False):
             return None
 
     thread_pool = ThreadPool(processes=8)
-    return [
+    return (
         (api_company, thread_pool.apply_async(supplier_object.cached_search, (search_term,)))
         for supplier_object, api_company in suppliers
-    ]
+    )
 
 _SUPPLIER_COMPANIES = None
 def setup_supplier_companies(inventree_api):

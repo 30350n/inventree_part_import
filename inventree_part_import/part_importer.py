@@ -46,7 +46,8 @@ class PartImporter:
         import_result = ImportResult.SUCCESS
 
         self.existing_manufacturer_part = None
-        for supplier, async_results in search(search_term, supplier_id, only_supplier):
+        search_results = search(search_term, supplier_id, only_supplier)
+        for supplier, async_results in search_results:
             info(f"searching at {supplier.name} ...")
             results, result_count = async_results.get()
 
@@ -72,7 +73,10 @@ class PartImporter:
 
             import_result |= self.import_supplier_part(supplier, api_part)
             if import_result == ImportResult.ERROR:
-                return import_result
+                # let the other api calls finish
+                for _, other_results in search_results:
+                    other_results.wait()
+                return ImportResult.ERROR
 
         if not self.existing_manufacturer_part:
             import_result |= ImportResult.FAILURE
