@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import importlib.util
 from inspect import isfunction
 from pathlib import Path
+import re
 import shutil
 import sys
 from typing import TYPE_CHECKING
@@ -70,9 +71,19 @@ def setup_inventree_api():
     inventree_api = None
     while not inventree_api:
         prompt("setup your InvenTree API connection:", end="\n")
+
         host = prompt_input("host")
+        if not (match := INVENTREE_HOST_REGEX.fullmatch(host)):
+            error(f"invalid hostname '{host}'")
+            continue
+        if not match.group("scheme"):
+            scheme = "http" if match.group("hostname") == "localhost" else "https"
+            warning(f"hostname is missing scheme, assuming '{scheme}'")
+            host = f"{scheme}://{host}"
+
         username = prompt_input("username")
         password = secure_input("password:").strip()
+
         try:
             inventree_api = RetryInvenTreeAPI(
                 host,
@@ -89,6 +100,9 @@ def setup_inventree_api():
     success(f"wrote API configuration to '{inventree_config}'")
 
     return inventree_api
+
+INVENTREE_HOST_REGEX = re.compile(
+    r"^(?P<scheme>[^:/\s]+://)?(?P<hostname>[^:/\s]+)(?::(?P<port>\d{1,5}))?(?P<path>/.*)?$")
 
 DEFAULT_CONFIG_VARS = {
     "max_results": 10,
