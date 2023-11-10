@@ -7,12 +7,11 @@ from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config
 from .error_helper import *
 
 def setup_categories_and_parameters(inventree_api):
+    categories_config = get_categories_config(inventree_api)
+    parameters_config = get_parameters_config(inventree_api)
+
     info("setting up categories ...")
-
-    categories_config = get_categories_config()
     categories = parse_category_recursive(categories_config)
-
-    parameters_config = get_parameters_config()
     parameters = parse_parameters(parameters_config)
 
     used_parameters = set.union(set(), *(set(c.parameters) for c in categories.values()))
@@ -228,3 +227,63 @@ def parse_parameters(parameters_dict):
         )
 
     return parameters
+
+def setup_config_from_inventree(inventree_api):
+    info(f"copying categories and parameters configuration from '{inventree_api.base_url}' ...")
+    categories = {
+        part_category.pk: {
+            "name": part_category.name,
+            "parent": part_category.parent,
+            "_description": part_category.description,
+            "_structural": part_category.structural,
+            "all_parameters": set(),
+            "_parameters": set(),
+        }
+        for part_category in PartCategory.list(inventree_api)
+    }
+
+    parameters = {}
+    for template in PartCategoryParameterTemplate.list(inventree_api):
+        parameter_name = template.parameter_template_detail["name"]
+        if parameter_name not in parameters:
+            fields = {}
+            if units := template.parameter_template_detail["units"]:
+                fields["_unit"] = units
+            if (desc := template.parameter_template_detail["description"]) != parameter_name:
+                fields["_description"] = desc
+            parameters[parameter_name] = fields
+
+        if category := categories.get(template.category):
+            category["all_parameters"].add(parameter_name)
+            category["_parameters"].add(parameter_name)
+
+    for _, category in categories.items():
+        if parent_category := categories.get(category["parent"]):
+            parent_category[category["name"]] = category
+            category["_parameters"] -= parent_category["all_parameters"]
+
+    for category in categories.values():
+        if not category["_structural"]:
+            del category["_structural"]
+        if category["_description"] == category["name"]:
+            del category["_description"]
+        if category["parent"] is not None:
+            del category["name"]
+            del category["parent"]
+        if category["_parameters"]:
+            category["_parameters"] = sorted(category["_parameters"])
+        else:
+            del category["_parameters"]
+        del category["all_parameters"]
+
+    category_tree = {
+        root_category["name"]: root_category
+        for root_category in categories.values()
+        if "parent" in root_category
+    }
+
+    for root_category in category_tree.values():
+        del root_category["name"]
+        del root_category["parent"]
+
+    return category_tree, parameters

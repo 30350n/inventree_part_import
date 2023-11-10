@@ -9,7 +9,7 @@ import shutil
 import sys
 from typing import TYPE_CHECKING
 
-from cutie import prompt_yes_or_no, secure_input, select_multiple
+from cutie import prompt_yes_or_no, secure_input, select, select_multiple
 from isocodes import countries, currencies, languages
 from platformdirs import user_config_path
 from requests.exceptions import HTTPError, Timeout
@@ -161,27 +161,61 @@ def get_config(reload=False):
     return _CONFIG_LOADED
 
 CATEGORIES_CONFIG = "categories.yaml"
-def get_categories_config():
-    return _get_config_file(_CONFIG_DIR / CATEGORIES_CONFIG)
-
-PARAMETERS_CONFIG = "parameters.yaml"
-def get_parameters_config():
-    return _get_config_file(_CONFIG_DIR / PARAMETERS_CONFIG)
-
-def _get_config_file(config_path: Path):
-    if not config_path.is_file():
-        info(f"failed to find {config_path.name} config file", end="\n")
-        new_configuration_hint()
-        if prompt_yes_or_no("copy the default configuration file?", default_is_yes=True):
-            shutil.copy(PARENT_DIR / f"default_{config_path.name}", config_path)
-        else:
-            return None
+def get_categories_config(inventree_api):
+    categories_config = _CONFIG_DIR / CATEGORIES_CONFIG
+    if not categories_config.is_file():
+        setup_default_configuration_files(inventree_api)
 
     try:
-        return yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        return yaml.safe_load(categories_config.read_text(encoding="utf-8"))
     except MarkedYAMLError as e:
         error(e, prefix="")
         return None
+
+PARAMETERS_CONFIG = "parameters.yaml"
+def get_parameters_config(inventree_api):
+    parameters_config = _CONFIG_DIR / PARAMETERS_CONFIG
+    if not parameters_config.is_file():
+        setup_default_configuration_files(inventree_api)
+
+    try:
+        return yaml.safe_load(parameters_config.read_text(encoding="utf-8"))
+    except MarkedYAMLError as e:
+        error(e, prefix="")
+        return None
+
+def setup_default_configuration_files(inventree_api):
+    prompt("\nsetup default categories/parameters configuration:", end="\n")
+    choices = (
+        "Copy categories from InvenTree",
+        "Copy default categories configuration",
+        "Create empty configuration (manual setup)"
+    )
+    choice_index = select(choices, deselected_prefix="  ", selected_prefix="> ")
+
+    if choice_index == 0:
+        from ..categories import setup_config_from_inventree
+        categories, parameters = setup_config_from_inventree(inventree_api)
+
+    categories_config = _CONFIG_DIR / CATEGORIES_CONFIG
+    if not categories_config.is_file():
+        match choice_index:
+            case 0:
+                categories_config.write_text(yaml_dump(categories), encoding="utf-8")
+            case 1:
+                shutil.copy(PARENT_DIR / f"default_{CATEGORIES_CONFIG}", categories_config)
+            case 2:
+                categories_config.touch()
+
+    parameters_config = _CONFIG_DIR / PARAMETERS_CONFIG
+    if not parameters_config.is_file():
+        match choice_index:
+            case 0:
+                parameters_config.write_text(yaml_dump(parameters), encoding="utf-8")
+            case 1:
+                shutil.copy(PARENT_DIR / f"default_{PARAMETERS_CONFIG}", parameters_config)
+            case 2:
+                parameters_config.touch()
 
 @contextmanager
 def update_config_file(config_path: Path):
