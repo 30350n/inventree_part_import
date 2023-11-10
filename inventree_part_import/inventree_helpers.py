@@ -134,7 +134,7 @@ def _download_image_content(url):
     session.mount("https://", TLSv1_2HTTPAdapter())
 
     try:
-        for retry in retry_timeouts:
+        for retry in retry_timeouts():
             with retry:
                 result = session.get(url, headers=DOWNLOAD_HEADERS)
                 result.raise_for_status()
