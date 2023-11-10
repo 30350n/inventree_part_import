@@ -81,8 +81,8 @@ Request an API key at the [Developers Page](https://developers.tme.eu/).
 
 ### `categories.yaml`
 
-This file should specify all your InvenTree categories, as well as meta information like
-category aliases, parameters, etc.
+This file should specify all your InvenTree categories, as well as metadata like category
+aliases, parameters, etc. for them.
 
 It's defined as hierarchical tree structure where every 'node' represents a category.
 For example:
@@ -95,7 +95,7 @@ Electronics:
 Products:
 ```
 
-Additionally you can define the following special attributes (starting with `_`):
+Additionally you can define the following meta attributes (starting with `_`):
 
 - `_aliases` has to be a list of supplier category names which will be mapped to that category
 - `_description` specifies the categories description (defaults to category name)
@@ -128,7 +128,25 @@ Products:
 
 ### `parameters.yaml`
 
-TODO ...
+This file should specify all your InvenTree parameters, as well as metadata for them.
+
+The following meta attributes are available:
+
+- `_aliases` has to be a list of supplier parameter names which will be mapped to that parameter
+- `_description` specifies the parameters description (defaults to parameter name)
+- `_unit` specifies the parameters unit (experimental)
+
+Here's an example for a single parameter:
+
+```yaml
+Input Voltage:
+    _aliases:
+        - Voltage - Input
+        - Voltage - Input (Max)
+        - Maximum Input Voltage
+    _description: Max Input Voltage # optional
+    _unit: V # experimental, this can lead to import problems
+```
 
 ### Pre Creation Hooks (`hooks.py`)
 
