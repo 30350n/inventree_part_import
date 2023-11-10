@@ -160,10 +160,10 @@ def inventree_part_import(
     finally:
         if failed_parts:
             failed_parts_str = "\n".join(failed_parts)
-            error(f"the following parts failed to import:\n{failed_parts_str}", prefix="")
+            error(f"the following parts failed to import:\n{failed_parts_str}\n", prefix="")
         if incomplete_parts:
             incomplete_parts_str = "\n".join(incomplete_parts)
-            warning(f"the following parts are incomplete:\n{incomplete_parts_str}", prefix="")
+            warning(f"the following parts are incomplete:\n{incomplete_parts_str}\n", prefix="")
 
     if not failed_parts and not incomplete_parts:
         success("imported all parts!")
