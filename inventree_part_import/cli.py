@@ -156,15 +156,20 @@ def inventree_part_import(
     incomplete_parts = []
 
     try:
-        for part in parts:
-            match importer.import_part(part, supplier, only_supplier):
-                case ImportResult.ERROR | ImportResult.FAILURE:
+        for index, part in enumerate(parts):
+            last_import_result = importer.import_part(part, supplier, only_supplier)
+            print()
+            match last_import_result:
+                case ImportResult.ERROR:
+                    failed_parts.append(part)
+                    incomplete_parts += parts[index + 1:]
+                    break
+                case ImportResult.FAILURE:
                     failed_parts.append(part)
                 case ImportResult.INCOMPLETE:
                     incomplete_parts.append(part)
-            print()
 
-        if interactive == "twice":
+        if interactive == "twice" and last_import_result != ImportResult.ERROR:
             success("reimporting failed/incomplete parts in interactive mode ...\n", prefix="")
             parts2 = (*failed_parts, *incomplete_parts)
             failed_parts = []

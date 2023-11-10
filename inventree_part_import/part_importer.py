@@ -106,6 +106,8 @@ class PartImporter:
         return [*api_parts, None][index]
 
     def import_supplier_part(self, supplier: Company, api_part: ApiPart):
+        import_result = ImportResult.SUCCESS
+
         part = None
         if supplier_part := get_supplier_part(self.api, api_part.SKU):
             info(f"found existing {supplier.name} part {supplier_part.SKU} ...")
@@ -146,7 +148,8 @@ class PartImporter:
                 error(f"category '{name}' is not defined in {CATEGORIES_CONFIG}")
                 return ImportResult.FAILURE
 
-            self.setup_parameters(part, api_part, category, update_part)
+            result = self.setup_parameters(part, api_part, category, update_part)
+            import_result |= result
 
         self.existing_manufacturer_part = manufacturer_part
 
@@ -173,7 +176,7 @@ class PartImporter:
         url = self.api.base_url + supplier_part.url[1:]
         actioned = "updated" if updating else "added"
         success(f"{actioned} {supplier.name} part {supplier_part.SKU} ({url})")
-        return ImportResult.SUCCESS
+        return import_result
 
     def setup_manufacturer_part(self, api_part: ApiPart) -> tuple[ManufacturerPart, Part]:
         for subcategory in reversed(api_part.category_path):
@@ -235,6 +238,8 @@ class PartImporter:
             info("updating price breaks ...")
 
     def setup_parameters(self, part, api_part: ApiPart, category, update_existing=True):
+        import_result = ImportResult.SUCCESS
+
         existing_parameters = {
             parameter.template_detail["name"]: parameter
             for parameter in Parameter.list(self.api, part=part.pk)
@@ -266,6 +271,7 @@ class PartImporter:
                     ))
                 else:
                     warning(f"failed to find template parameter for '{name}'")
+                    import_result |= ImportResult.INCOMPLETE
 
         if async_results:
             info("updating part parameters ...")
@@ -273,6 +279,7 @@ class PartImporter:
         for result in async_results:
             if warning_str := result.get():
                 warning(warning_str)
+                import_result |= ImportResult.INCOMPLETE
 
         already_set_parameters = {
             name for name, parameter in existing_parameters.items() if parameter.data}
@@ -284,6 +291,9 @@ class PartImporter:
                 f"failed to match {len(unassigned_parameters)} parameter{plural} from supplier "
                 f"API ({str(unassigned_parameters)[1:-1]})"
             )
+            import_result |= ImportResult.INCOMPLETE
+
+        return import_result
 
 def create_parameter(inventree_api, part, parameter_template, value):
     try:
