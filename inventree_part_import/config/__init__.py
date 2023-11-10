@@ -95,7 +95,7 @@ def setup_inventree_api():
         except (ConnectionError, HTTPError, Timeout) as e:
             error(f"failed to connect to '{host}' with '{e}'")
 
-    yaml_data = yaml.safe_dump({"host": host, "token": inventree_api.token}, sort_keys=False)
+    yaml_data = yaml_dump({"host": host, "token": inventree_api.token}, sort_keys=False)
     inventree_config.write_text(yaml_data, encoding="utf-8")
     success(f"wrote API configuration to '{inventree_config}'")
 
@@ -154,8 +154,9 @@ def get_config(reload=False):
         "scraping": scraping,
         **DEFAULT_CONFIG_VARS,
     }
-    with config.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(_CONFIG_LOADED, file, sort_keys=False)
+    yaml_data = yaml_dump(_CONFIG_LOADED, sort_keys=False)
+    config.write_text(yaml_data, encoding="utf-8")
+
     success("setup default configuration!")
     return _CONFIG_LOADED
 
@@ -190,7 +191,7 @@ def update_config_file(config_path: Path):
     finally:
         backup_path = config_path.with_suffix(config_path.suffix + "_bak")
         shutil.copy(config_path, backup_path)
-        yaml_data = yaml.safe_dump(config, sort_keys=False)
+        yaml_data = yaml_dump(config, sort_keys=False)
         config_path.write_text(yaml_data, encoding="utf-8")
         backup_path.unlink()
 
@@ -246,7 +247,7 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
             suppliers_config_data[id] = new_supplier_config
             suppliers_out[id] = suppliers[id]
 
-    yaml_data = yaml.safe_dump(suppliers_config_data, indent=4, sort_keys=False)
+    yaml_data = yaml_dump(suppliers_config_data, sort_keys=False)
     suppliers_config.write_text(yaml_data, encoding="utf-8")
 
     return suppliers_out
@@ -334,3 +335,13 @@ def new_configuration_hint():
     if _NEW_CONFIGURATION_HINT:
         hint("this is normal if you're using this program for the first time")
         _NEW_CONFIGURATION_HINT = False
+
+def yaml_dump(data, sort_keys=True):
+    yaml_data = yaml.safe_dump(data, indent=4, sort_keys=sort_keys)
+    yaml_data = YAML_REMOVE_EMPTY_DICTS_REGEX.sub("", yaml_data)
+    yaml_data = YAML_FIX_LIST_INDENTATION_REGEX.sub(YAML_FIX_LIST_INDENTATION_SUB, yaml_data)
+    return yaml_data
+
+YAML_REMOVE_EMPTY_DICTS_REGEX = re.compile(r" \{\}$", re.MULTILINE)
+YAML_FIX_LIST_INDENTATION_REGEX = re.compile(r"^(\s*)(- )", re.MULTILINE)
+YAML_FIX_LIST_INDENTATION_SUB = r"\g<1>    \g<2>"
