@@ -124,7 +124,7 @@ class PartImporter:
             else:
                 if not api_part.finalize():
                     return ImportResult.FAILURE
-                result = self.setup_manufacturer_part(api_part)
+                result = self.create_manufacturer_part(api_part)
                 if isinstance(result, ImportResult):
                     return result
                 manufacturer_part, part = result
@@ -182,18 +182,18 @@ class PartImporter:
         success(f"{actioned} {supplier.name} part {supplier_part.SKU} ({url})")
         return import_result
 
-    def setup_manufacturer_part(self, api_part: ApiPart) -> tuple[ManufacturerPart, Part]:
-        for subcategory in reversed(api_part.category_path):
-            if (category := self.category_map.get(subcategory)) and not category.structural:
-                break
-        else:
-            error(f"failed to match category for '{' / '.join(api_part.category_path)}'")
-            return ImportResult.FAILURE
-
+    def create_manufacturer_part(self, api_part: ApiPart) -> tuple[ManufacturerPart, Part]:
         part_data = api_part.get_part_data()
         if part := get_part(self.api, api_part.MPN):
             update_object_data(part, part_data, f"part {api_part.MPN}")
         else:
+            for subcategory in reversed(api_part.category_path):
+                if (category := self.category_map.get(subcategory)) and not category.structural:
+                    break
+            else:
+                error(f"failed to match category for '{' / '.join(api_part.category_path)}'")
+                return ImportResult.FAILURE
+
             info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
             try:
                 part = Part.create(self.api, {
@@ -223,14 +223,12 @@ class PartImporter:
         updated_pricing = False
         for quantity, price in api_part.price_breaks.items():
             if price_break := price_breaks.get(quantity):
-                if price != float(price_break.price):
-                    price_break.save(data={
-                        "price": price,
-                        "price_currency": api_part.currency,
-                    })
-                    updated_pricing = True
+                if price == float(price_break.price):
+                    continue
+                price_break.save({"price": price, "price_currency": api_part.currency})
+                updated_pricing = True
             else:
-                price_break = SupplierPriceBreak.create(self.api, {
+                SupplierPriceBreak.create(self.api, {
                     "part": supplier_part.pk,
                     "quantity": quantity,
                     "price": price,
@@ -307,14 +305,15 @@ def create_parameter(inventree_api, part, parameter_template, value):
             "data": value,
         })
     except HTTPError as e:
-        return f"failed to create parameter {parameter_template.name} with: {e.args[0]['body']}"
+        msg = e.args[0]["body"]
+        return f"failed to create parameter '{parameter_template.name}' with '{msg}'"
 
 def update_parameter(parameter, value):
     try:
         parameter.save({"data": value})
     except HTTPError as e:
-        error_msg = e.args[0]["body"]
-        return f"failed to update parameter {parameter.name} to '{value}' with: {error_msg}"
+        msg = e.args[0]["body"]
+        return f"failed to update parameter '{parameter.name}' to '{value}' with '{msg}'"
 
 SANITIZE_PARAMETER = re.compile("±")
 
