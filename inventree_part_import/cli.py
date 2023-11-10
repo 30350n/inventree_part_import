@@ -57,6 +57,9 @@ def inventree_part_import(
     INPUTS can either be supplier part numbers OR paths to tabular data files.
     """
 
+    from inventree.api import logger
+    logger.disabled = True
+
     if config_dir:
         try:
             set_config_dir(Path(config_dir))
