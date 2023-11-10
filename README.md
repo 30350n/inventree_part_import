@@ -8,13 +8,52 @@ DigiKey, LCSC, Mouser, etc. into your InvenTree instance.
 
 ## Installation
 
-```sh
+```console
 pipx install git+https://github.com/30350n/inventree_part_import.git
 ```
 
-*(`pip` should also work, but [`pipx`](https://github.com/pypa/pipx) is the new recommended way to install standalone applications)*
+*(`pip` should also work, but [`pipx`](https://github.com/pypa/pipx) is the new recommended way
+to install standalone applications)*
 
-## Basic Usage
+## Getting Started
+
+### Initial Configuration
+
+When using the CLI tool for the first time, it will guide you through creating your own
+configuration.
+
+When configuring suppliers, it's **highly recommended** to always enable the DigiKey API:
+
+```console
+select the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)
+> [x] DigiKey
+  [ ] LCSC
+  [ ] Mouser
+  [ ] Reichelt
+  [ ] TME
+```
+
+#### Default categories/parameters configuration
+
+```console
+setup default categories/parameters configuration:
+> Copy categories from InvenTree
+  Copy default categories configuration
+  Create empty configuration (manual setup)
+```
+
+If you have already been using InvenTree for some time (so you already have setup your category
+structure, parts, etc.), select the `Copy categories from InvenTree` option, to automatically
+setup a configuration which matches your InvenTree database.
+
+If you are a new user, you can select the `Copy default categories configuration` to create
+a basic configuration which you can extend in the future.
+
+You can also create your own configuration from scratch (or manually copy
+[someones existing configuration](https://github.com/30350n/inventree_part_import_config)
+) by selecting the `Create empty configuration (manual setup)` option.
+
+### Basic Usage
 
 To import parts, simply use the `inventree_part_import` command, followed by the supplier or
 manufacturer part numbers of the parts you want to import.
@@ -186,6 +225,8 @@ likely be done by implementing plugins which offer the required functionality fo
 - [Ki-nTree](https://github.com/sparkmicro/Ki-nTree) ([@eeintech](https://github.com/eeintech))
   This project is inspired by Ki-nTree and aims to fix most of the issues I've had with it.
   It only provides the part importing functionality, but tries to improve it in every way.
+
+- Thanks to [@atanisoft](https://github.com/atanisoft) for extensive beta testing!
 
 ## License
 
