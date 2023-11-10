@@ -5,7 +5,7 @@ from click.testing import CliRunner
 from inventree.api import InvenTreeAPI
 
 from inventree_part_import.cli import inventree_part_import
-from inventree_part_import.config import (CATEGORIES_CONFIG, INVENTREE_CONFIG,
+from inventree_part_import.config import (CATEGORIES_CONFIG, CONFIG, INVENTREE_CONFIG,
                                           PARAMETERS_CONFIG, SUPPLIERS_CONFIG)
 
 HOST = "http://localhost:55555"
@@ -30,6 +30,8 @@ class TestCli:
         TEST_CONFIG_DIR.mkdir(parents=True)
 
         api = InvenTreeAPI(HOST, username=USERNAME, password=PASSWORD, use_token_auth=True)
+        (TEST_CONFIG_DIR / CONFIG).write_text(
+            "currency: EUR\nlanguage: EN\nlocation: DE\nscraping: true\n")
         (TEST_CONFIG_DIR / INVENTREE_CONFIG).write_text(f"host: {HOST}\ntoken: {api.token}\n")
         (TEST_CONFIG_DIR / SUPPLIERS_CONFIG).write_text("lcsc:\n    ignore_duplicates: true\n")
         (TEST_CONFIG_DIR / CATEGORIES_CONFIG).touch()

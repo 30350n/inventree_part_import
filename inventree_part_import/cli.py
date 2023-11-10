@@ -86,9 +86,10 @@ def inventree_part_import(
         if not show_config_dir:
             info(f"set configuration directory to '{config_dir}'", end="\n")
 
-        # update used/available suppliers, because they already got loaded before
+        # update used/available suppliers, config because they already got loaded before
         # also update the Choice types to be able to print the help message properly
         suppliers, available_suppliers = get_suppliers(reload=True, setup=False)
+        get_config(reload=True)
 
         params = {param.name: param for param in click.get_current_context().command.params}
         SuppliersChoices = click.Choice(suppliers.keys())

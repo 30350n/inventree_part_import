@@ -114,9 +114,9 @@ VALID_CONFIG_VARS = {"currency", "language", "location", "scraping", *DEFAULT_CO
 
 _CONFIG_LOADED = None
 CONFIG = "config.yaml"
-def get_config():
+def get_config(reload=False):
     global _CONFIG_LOADED
-    if _CONFIG_LOADED is not None:
+    if not reload and _CONFIG_LOADED is not None:
         return _CONFIG_LOADED
 
     config = _CONFIG_DIR / CONFIG
@@ -131,6 +131,10 @@ def get_config():
         except MarkedYAMLError as e:
             error(e, prefix="")
             sys.exit(1)
+
+    if reload:
+        _CONFIG_LOADED = None
+        return _CONFIG_LOADED
 
     info(f"failed to find {CONFIG} config file", end="\n")
     new_configuration_hint()
