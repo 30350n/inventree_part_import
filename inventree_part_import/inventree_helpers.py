@@ -10,9 +10,10 @@ from inventree.part import ParameterTemplate, Part
 from platformdirs import user_cache_path
 import requests
 from requests.compat import urlparse
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, Timeout
 
 from .error_helper import *
+from .retries import retry_timeouts
 
 INVENTREE_CACHE = user_cache_path(__package__, ensure_exists=True) / "inventree"
 INVENTREE_CACHE.mkdir(parents=True, exist_ok=True)
@@ -56,8 +57,8 @@ def update_object_data(obj: InventreeObject, data: dict, info_label=""):
 @cache
 def get_parameter_templates(inventree_api: InvenTreeAPI):
     return {
-        api_parameter_template.name: api_parameter_template
-        for api_parameter_template in ParameterTemplate.list(inventree_api)
+        parameter_template.name: parameter_template
+        for parameter_template in ParameterTemplate.list(inventree_api)
     }
 
 @cache
@@ -68,8 +69,8 @@ def create_manufacturer(inventree_api: InvenTreeAPI, name):
     ]
     if len(manufacturers) == 1:
         return manufacturers[0]
-
     assert len(manufacturers) == 0
+
     info(f"creating manufacturer '{name}' ...")
     return InventreeCompany.create(inventree_api, {
         "name": name,
@@ -111,7 +112,7 @@ def upload_image(api_object: ImageMixin, image_url: str):
 
     try:
         api_object.uploadImage(str(image_path))
-    except requests.exceptions.HTTPError as e:
+    except HTTPError as e:
         warning(f"failed to upload image with: {e.args[0]['body']}")
 
 DOWNLOAD_HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -132,9 +133,13 @@ def _download_image_content(url):
     session = requests.Session()
     session.mount("https://", TLSv1_2HTTPAdapter())
 
-    result = session.get(url, headers=DOWNLOAD_HEADERS)
-    if result.status_code != 200:
-        warning(f"failed to download image with code {result.status_code}")
+    try:
+        for retry in retry_timeouts:
+            with retry:
+                result = session.get(url, headers=DOWNLOAD_HEADERS)
+                result.raise_for_status()
+    except (HTTPError, Timeout) as e:
+        warning(f"failed to download image with '{e}'")
         return None
 
     return result.content

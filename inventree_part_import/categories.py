@@ -42,6 +42,7 @@ def setup_categories_and_parameters(inventree_api):
                 "parent": parent.pk if parent else None,
             })
             part_categories[tuple(category.path)] = part_category
+
         elif category.description != part_category.description:
             info(f"updating description for category '{'/'.join(category.path)}' ...")
             part_category.save({"description": category.description})

@@ -5,7 +5,7 @@ import re
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
 from inventree.part import Parameter, Part
-import requests
+from requests.exceptions import HTTPError
 
 from .categories import setup_categories_and_parameters
 from .config import CATEGORIES_CONFIG, get_config, get_pre_creation_hooks
@@ -160,7 +160,7 @@ class PartImporter:
                     "SKU": api_part.SKU,
                     **supplier_part_data,
                 })
-            except requests.exceptions.HTTPError as e:
+            except HTTPError as e:
                 error(f"failed to create {supplier.name} part with: {e.args[0]['body']}")
                 return ImportResult.ERROR
 
@@ -189,7 +189,7 @@ class PartImporter:
                     "category": category.part_category.pk,
                     **part_data,
                 })
-            except requests.exceptions.HTTPError as e:
+            except HTTPError as e:
                 error(f"failed to create part with: {e.args[0]['body']}")
                 return ImportResult.ERROR
 
@@ -244,7 +244,7 @@ class PartImporter:
                     matched_parameters[name] = value
                     break
 
-        thread_pool = ThreadPool(8)
+        thread_pool = ThreadPool(4)
         async_results = []
         for name, value in matched_parameters.items():
             if not (value := sanitize_parameter_value(value)):
@@ -288,13 +288,13 @@ def create_parameter(inventree_api, part, parameter_template, value):
             "template": parameter_template.pk,
             "data": value,
         })
-    except requests.exceptions.HTTPError as e:
+    except HTTPError as e:
         return f"failed to create parameter {parameter_template.name} with: {e.args[0]['body']}"
 
 def update_parameter(parameter, value):
     try:
         parameter.save({"data": value})
-    except requests.exceptions.HTTPError as e:
+    except HTTPError as e:
         error_msg = e.args[0]["body"]
         return f"failed to update parameter {parameter.name} to '{value}' with: {error_msg}"
 

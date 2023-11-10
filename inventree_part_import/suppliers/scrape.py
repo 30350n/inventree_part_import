@@ -6,6 +6,7 @@ from requests import Response, Session
 
 from ..config import get_config
 from ..error_helper import *
+from ..retries import retry_timeouts
 
 _SESSION = None
 
@@ -19,7 +20,9 @@ def scrape(url, extra_headers=None, fallback_domains=None, setup_hook=None) -> R
     request_timeout = config["request_timeout"]
     retry_timeout = config["retry_timeout"]
 
-    result = _SESSION.get(url, headers=extra_headers, timeout=request_timeout)
+    for retry in retry_timeouts():
+        with retry:
+            result = _SESSION.get(url, headers=extra_headers, timeout=request_timeout)
     if result.status_code == 200:
         return result
 
@@ -35,7 +38,9 @@ def scrape(url, extra_headers=None, fallback_domains=None, setup_hook=None) -> R
         _SESSION = setup_session(setup_hook)
 
         fallback_url = DOMAIN_REGEX.sub(DOMAIN_SUB.format(fallback), url) if fallback else url
-        result = _SESSION.get(fallback_url, headers=extra_headers)
+        for retry in retry_timeouts():
+            with retry:
+                result = _SESSION.get(fallback_url, headers=extra_headers)
         if result.status_code == 200:
             return result
 
@@ -51,7 +56,9 @@ def setup_session(setup_hook=None) -> Session:
     })
 
     if setup_hook:
-        setup_hook(session)
+        for retry in retry_timeouts():
+            with retry:
+                setup_hook(session)
 
     return session
 

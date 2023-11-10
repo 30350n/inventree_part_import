@@ -9,9 +9,9 @@ import sys
 from typing import TYPE_CHECKING
 
 from cutie import prompt_yes_or_no, secure_input, select_multiple
-from inventree.api import InvenTreeAPI
 from isocodes import countries, currencies, languages
 from platformdirs import user_config_path
+from requests.exceptions import HTTPError, Timeout
 import yaml
 from yaml.error import MarkedYAMLError
 
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 from .. import __package__ as parent_package
 from ..error_helper import *
+from ..retries import RetryInvenTreeAPI
 
 PARENT_DIR = Path(__file__).parent
 
@@ -55,14 +56,14 @@ def setup_inventree_api():
         try:
             config = yaml.safe_load(inventree_config.read_text(encoding="utf-8"))
             host = config.get("host")
-            return InvenTreeAPI(host=host, token=config.get("token"), timeout=api_timeout)
+            return RetryInvenTreeAPI(host=host, token=config.get("token"), timeout=api_timeout)
         except MarkedYAMLError as e:
             error(e, prefix="")
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, HTTPError, Timeout) as e:
             error(f"failed to connect to '{host}' with '{e}'")
-            print()
-            if not prompt_yes_or_no("enter new connection details?", default_is_yes=True):
-                return None
+        print()
+        if not prompt_yes_or_no("enter new connection details?", default_is_yes=True):
+            return None
     else:
         print()
 
@@ -73,14 +74,14 @@ def setup_inventree_api():
         username = prompt_input("username")
         password = secure_input("password:").strip()
         try:
-            inventree_api = InvenTreeAPI(
+            inventree_api = RetryInvenTreeAPI(
                 host,
                 username=username,
                 password=password,
                 use_token_auth=True,
                 timeout=api_timeout,
             )
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, HTTPError, Timeout) as e:
             error(f"failed to connect to '{host}' with '{e}'")
 
     yaml_data = yaml.safe_dump({"host": host, "token": inventree_api.token}, sort_keys=False)

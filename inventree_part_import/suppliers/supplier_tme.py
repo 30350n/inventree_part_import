@@ -5,8 +5,10 @@ from types import MethodType
 
 import requests
 from requests.compat import quote, urlencode
+from requests.exceptions import HTTPError, JSONDecodeError, Timeout
 
 from ..error_helper import *
+from ..retries import retry_timeouts
 from .base import ApiPart, Supplier
 
 class TME(Supplier):
@@ -185,14 +187,18 @@ class TMEApi:
         signature = b64encode(hmac.new(self.secret.encode(), signature_base, sha1).digest())
         data_sorted["ApiSignature"] = signature
 
-        result = requests.post(url, urlencode(data_sorted), headers=self.HEADERS)
-        if result.status_code != 200:
+        try:
+            for retry in retry_timeouts():
+                with retry:
+                    result = requests.post(url, urlencode(data_sorted), headers=self.HEADERS)
+                    result.raise_for_status()
+        except (HTTPError, Timeout) as e:
             try:
                 status = result.json()["Status"]
-                if status != "E_INPUT_PARAMS_VALIDATION_ERROR":
-                    error(f"'{action}' action failed with '{status}'", prefix="TME API error: ")
-            except (requests.exceptions.JSONDecodeError, KeyError):
-                error(f"'{action}' action failed with unknown error", prefix="TME API error: ")
-            return None
+                if status == "E_INPUT_PARAMS_VALIDATION_ERROR":
+                    return None
+                error(f"'{action}' action failed with '{status}'", prefix="TME API error: ")
+            except (JSONDecodeError, KeyError):
+                error(f"'{action}' action failed with '{e}'", prefix="TME API error: ")
 
         return result

@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from mouser.api import MouserPartSearchRequest
 
 from ..error_helper import *
+from ..retries import retry_timeouts
 from .base import ApiPart, Supplier, money2float
 from .scrape import DOMAIN_REGEX, DOMAIN_SUB, scrape
 
@@ -20,7 +21,9 @@ class Mouser(Supplier):
 
     def search(self, search_term):
         search_request = MouserPartSearchRequest("partnumber")
-        search_request.part_search(search_term)
+        for retry in retry_timeouts():
+            with retry:
+                search_request.part_search(search_term)
 
         response = search_request.get_response()
         if not isinstance(response, dict):
