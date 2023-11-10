@@ -92,6 +92,7 @@ def get_suppliers(reload=False, setup=True) -> (dict, dict):
     _SUPPLIER_OBJECTS = load_suppliers_config(_AVAILABLE_SUPPLIER_OBJECTS, setup=setup)
 
     if (available := len(_AVAILABLE_SUPPLIER_OBJECTS)) > (loaded := len(_SUPPLIER_OBJECTS)):
-        hint(f"only {loaded} of {available} available supplier modules are configured")
+        if setup:
+            hint(f"only {loaded} of {available} available supplier modules are configured")
 
     return _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS
