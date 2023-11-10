@@ -23,7 +23,15 @@ def handle_errors(func):
         except Timeout as e:
             error(f"connection timed out ({e})", prefix="FATAL: ")
         except HTTPError as e:
-            error(f"HTTP error ({e})", prefix="FATAL: ")
+            status_code = None
+            if e.response is not None:
+                status_code = e.response.status_code
+            elif e.args:
+                status_code = e.args[0].get("status_code")
+            if status_code in {408, 409, 500, 502, 503, 504}:
+                error(f"HTTP error ({e})", prefix="FATAL: ")
+            else:
+                raise e
     return wrapper
 
 _suppliers, _available_suppliers = get_suppliers(setup=False)
