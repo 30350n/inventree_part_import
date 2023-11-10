@@ -53,7 +53,8 @@ def setup_supplier_companies(inventree_api):
                 is_supplier=True,
                 primary_key=supplier_config.get("_primary_key"),
             ).setup(inventree_api)
-            supplier_config["_primary_key"] = api_company.pk
+            if not hasattr(inventree_api, "DRY_RUN"):
+                supplier_config["_primary_key"] = api_company.pk
             _SUPPLIER_COMPANIES[id] = api_company
 
 _SUPPLIER_OBJECTS = None

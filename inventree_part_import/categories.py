@@ -42,6 +42,8 @@ def setup_categories_and_parameters(inventree_api):
                 "parent": parent.pk if parent else None,
             })
             part_categories[tuple(category.path)] = part_category
+            if getattr(inventree_api, "DRY_RUN", False):
+                part_category.pathstring = "/".join(category.path)
 
         elif category.description != part_category.description:
             info(f"updating description for category '{'/'.join(category.path)}' ...")

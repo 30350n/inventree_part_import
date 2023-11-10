@@ -71,6 +71,9 @@ class PartImporter:
                 import_result |= ImportResult.INCOMPLETE
                 continue
 
+            if hasattr(self.api, "DRY_RUN"):
+                self.existing_manufacturer_part = None
+
             import_result |= self.import_supplier_part(supplier, api_part)
             if import_result == ImportResult.ERROR:
                 # let the other api calls finish
@@ -139,8 +142,9 @@ class PartImporter:
             if update_part:
                 update_object_data(part, api_part.get_part_data(), f"part {api_part.MPN}")
 
-        if not part.image and api_part.image_url:
-            upload_image(part, api_part.image_url)
+        if not hasattr(self.api, "DRY_RUN"):
+            if not part.image and api_part.image_url:
+                upload_image(part, api_part.image_url)
 
         if api_part.parameters:
             if not (category := self.part_category_to_category.get(part.category)):

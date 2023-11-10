@@ -2,6 +2,7 @@ from pathlib import Path
 
 import click
 from cutie import select
+from inventree.api import InvenTreeAPI
 from requests.exceptions import HTTPError, Timeout
 from tablib import import_set
 from tablib.exceptions import TablibException, UnsupportedFormat
@@ -49,6 +50,7 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
     "Enable interactive mode. 'twice' will run once normally, then rerun in interactive "
     "mode for any parts that failed to import correctly."
 ))
+@click.option("-d", "--dry", is_flag=True, help="Run without connecting to InvenTree database.")
 @click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
@@ -60,6 +62,7 @@ def inventree_part_import(
     supplier=None,
     only=None,
     interactive="false",
+    dry=False,
     config_dir=False,
     verbose=False,
     show_config_dir=False,
@@ -145,7 +148,12 @@ def inventree_part_import(
 
     if not verbose:
         error_helper.INFO_END = "\r"
-    inventree_api = setup_inventree_api()
+
+    if dry:
+        warning(DRY_MODE_WARNING, prefix="")
+        inventree_api = DryInvenTreeAPI()
+    else:
+        inventree_api = setup_inventree_api()
 
     # make sure suppliers.yaml exists
     get_suppliers(reload=True)
@@ -228,3 +236,35 @@ def load_tabular_data(path: Path):
         except TablibException as e:
             error(f"failed to parse file with '{e.__doc__}'")
             return None
+
+DRY_MODE_WARNING = (
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    "!!!!!!!!!!!!!!!!!!! RUNNING IN DRY MODE !!!!!!!!!!!!!!!!!!!\n"
+    "!!!!!!!!!!!!!!! (no parts will be imported) !!!!!!!!!!!!!!!\n"
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+)
+
+class DryInvenTreeAPI(InvenTreeAPI):
+    DRY_RUN = True
+
+    def __init__(self, host=None, **kwargs):
+        self.base_url = "running in dry mode"
+        pass
+
+    def get(self, url, **kwargs):
+        url_split = url.strip("/").split("/")
+        if url_split[-1].isnumeric():
+            raise HTTPError({"status_code": 404})
+        return []
+
+    def post(self, url, data, **kwargs):
+        return {"pk": 1337133742, "url": "", **data}
+
+    def testServer(self):
+        raise NotImplementedError()
+
+    def request(self, api_url, **kwargs):
+        raise NotImplementedError()
+
+    def downloadFile(self, url, destination, overwrite=False, params=None, proxies=...):
+        raise NotImplementedError()
