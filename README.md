@@ -230,4 +230,4 @@ likely be done by implementing plugins which offer the required functionality fo
 
 ## License
 
-- This project is licensed under the [MIT](LICENSE).
+- This project is licensed under the [MIT](LICENSE) license.
