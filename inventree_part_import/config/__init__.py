@@ -108,7 +108,7 @@ DEFAULT_CONFIG_VARS = {
     "max_results": 10,
     "request_timeout": 15.0,
     "retry_timeout": 3.0,
-    "interactive": False,
+    "interactive": "twice",
 }
 VALID_CONFIG_VARS = {"currency", "language", "location", "scraping", *DEFAULT_CONFIG_VARS}
 
