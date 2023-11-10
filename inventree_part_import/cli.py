@@ -8,8 +8,8 @@ from tablib.exceptions import TablibException, UnsupportedFormat
 from thefuzz import fuzz
 
 from . import error_helper
-from .config import (SUPPLIERS_CONFIG, get_config_dir, set_config_dir, setup_inventree_api,
-                     update_config_file, update_supplier_config)
+from .config import (CONFIG, SUPPLIERS_CONFIG, get_config, get_config_dir, set_config_dir,
+                     setup_inventree_api, update_config_file, update_supplier_config)
 from .error_helper import *
 from .part_importer import ImportResult, PartImporter
 from .suppliers import get_suppliers, setup_supplier_companies
@@ -30,14 +30,14 @@ _suppliers, _available_suppliers = get_suppliers(setup=False)
 SuppliersChoices = click.Choice(_suppliers.keys(), case_sensitive=False)
 AvailableSuppliersChoices = click.Choice(_available_suppliers.keys(), case_sensitive=False)
 
-InteractiveChoices = click.Choice(("false", "true", "twice"), case_sensitive=False)
+InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_sensitive=False)
 
 @click.command
 @click.pass_context
 @click.argument("inputs", nargs=-1)
 @click.option("-s", "--supplier", type=SuppliersChoices, help="Search this supplier first.")
 @click.option("-o", "--only", type=SuppliersChoices, help="Only search this supplier.")
-@click.option("-i", "--interactive", type=InteractiveChoices, default="false", help=(
+@click.option("-i", "--interactive", type=InteractiveChoices, default="default", help=(
     "Enable interactive mode. 'twice' will run once normally, then rerun in interactive "
     "mode for any parts that failed to import correctly."
 ))
@@ -103,6 +103,12 @@ def inventree_part_import(
     if not inputs:
         click.echo(context.get_help())
         return
+
+    if interactive == "default":
+        interactive = str(get_config()["interactive"]).lower()
+        if interactive not in set(InteractiveChoices.choices) - {"default"}:
+            warning(f"invalid value 'interactive: {interactive}' in '{CONFIG}'")
+            interactive = "false"
 
     only_supplier = False
     if only:

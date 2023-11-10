@@ -108,7 +108,9 @@ DEFAULT_CONFIG_VARS = {
     "max_results": 10,
     "request_timeout": 15.0,
     "retry_timeout": 3.0,
+    "interactive": False,
 }
+VALID_CONFIG_VARS = {"currency", "language", "location", "scraping", *DEFAULT_CONFIG_VARS}
 
 _CONFIG_LOADED = None
 CONFIG = "config.yaml"
@@ -121,7 +123,10 @@ def get_config():
     if config.is_file():
         try:
             _CONFIG_LOADED = yaml.safe_load(config.read_text(encoding="utf-8"))
-            _CONFIG_LOADED.update(DEFAULT_CONFIG_VARS)
+            for invalid_parameter in set(_CONFIG_LOADED) - VALID_CONFIG_VARS:
+                warning(f"invalid parameter '{invalid_parameter}' in '{CONFIG}'")
+                del _CONFIG_LOADED[invalid_parameter]
+            _CONFIG_LOADED = {**DEFAULT_CONFIG_VARS, **_CONFIG_LOADED}
             return _CONFIG_LOADED
         except MarkedYAMLError as e:
             error(e, prefix="")
