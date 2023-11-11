@@ -58,7 +58,7 @@ def setup_supplier_companies(inventree_api):
 
 _SUPPLIER_OBJECTS = None
 _AVAILABLE_SUPPLIER_OBJECTS = None
-def get_suppliers(reload=False, setup=True) -> (dict, dict):
+def get_suppliers(reload=False, setup=True) -> tuple[dict, dict]:
     global _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS
     if not reload and _SUPPLIER_OBJECTS is not None:
         return _SUPPLIER_OBJECTS, _AVAILABLE_SUPPLIER_OBJECTS

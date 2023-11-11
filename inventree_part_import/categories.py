@@ -7,6 +7,8 @@ from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config
 from .error_helper import *
 
 def setup_categories_and_parameters(inventree_api):
+    dry_run = hasattr(inventree_api, "DRY_RUN")
+
     categories_config = get_categories_config(inventree_api)
     parameters_config = get_parameters_config(inventree_api)
 
@@ -41,8 +43,9 @@ def setup_categories_and_parameters(inventree_api):
                 "parent": parent.pk if parent else None,
             })
             part_categories[tuple(category.path)] = part_category
-            if getattr(inventree_api, "DRY_RUN", False):
+            if dry_run:
                 part_category.pathstring = "/".join(category.path)
+                part_category._data["pk"] = hash(tuple(category.path))
 
         elif category.description != part_category.description:
             info(f"updating description for category '{'/'.join(category.path)}' ...")

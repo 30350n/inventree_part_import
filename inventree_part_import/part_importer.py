@@ -30,6 +30,7 @@ class PartImporter:
     def __init__(self, inventree_api, interactive=False):
         self.api = inventree_api
         self.interactive = interactive
+        self.dry_run = hasattr(inventree_api, "DRY_RUN")
 
         # preload pre_creation_hooks
         get_pre_creation_hooks()
@@ -41,7 +42,6 @@ class PartImporter:
             category.part_category.pk: category
             for category in self.category_map.values()
         }
-
         self.categories = set(self.category_map.values())
 
     def import_part(self, search_term, supplier_id=None, only_supplier=False):
@@ -72,9 +72,6 @@ class PartImporter:
                 warning(f"found {result_count} parts at {supplier.name}, skipping import")
                 import_result |= ImportResult.INCOMPLETE
                 continue
-
-            if hasattr(self.api, "DRY_RUN"):
-                self.existing_manufacturer_part = None
 
             import_result |= self.import_supplier_part(supplier, api_part)
             if import_result == ImportResult.ERROR:
@@ -135,26 +132,20 @@ class PartImporter:
             not self.existing_manufacturer_part
             or self.existing_manufacturer_part.pk != manufacturer_part.pk
         )
-        if not part:
+        if not part and not self.dry_run:
             part = Part(self.api, manufacturer_part.part)
 
-            if not self.existing_manufacturer_part:
+            if update_part:
                 if not api_part.finalize():
                     return ImportResult.FAILURE
-            if update_part:
                 update_object_data(part, api_part.get_part_data(), f"part {api_part.MPN}")
 
-        if not hasattr(self.api, "DRY_RUN"):
+        if not self.dry_run:
             if not part.image and api_part.image_url:
                 upload_image(part, api_part.image_url)
 
         if api_part.parameters:
-            if not (category := self.part_category_to_category.get(part.category)):
-                name = part.getCategory().pathstring
-                error(f"category '{name}' is not defined in {CATEGORIES_CONFIG}")
-                return ImportResult.FAILURE
-
-            result = self.setup_parameters(part, api_part, category, update_part)
+            result = self.setup_parameters(part, api_part, update_part)
             import_result |= result
 
         self.existing_manufacturer_part = manufacturer_part
@@ -167,7 +158,7 @@ class PartImporter:
             updating = False
             try:
                 supplier_part = SupplierPart.create(self.api, {
-                    "part": part.pk,
+                    "part": 0 if self.dry_run else part.pk,
                     "manufacturer_part": manufacturer_part.pk,
                     "supplier": supplier.pk,
                     "SKU": api_part.SKU,
@@ -278,8 +269,16 @@ class PartImporter:
         if updated_pricing:
             info("updating price breaks ...")
 
-    def setup_parameters(self, part, api_part: ApiPart, category, update_existing=True):
+    def setup_parameters(self, part, api_part: ApiPart, update_existing=True):
         import_result = ImportResult.SUCCESS
+
+        if self.dry_run and not part:
+            return import_result
+
+        if not (category := self.part_category_to_category.get(part.category)):
+            name = part.getCategory().pathstring
+            error(f"category '{name}' is not defined in {CATEGORIES_CONFIG}")
+            return ImportResult.FAILURE
 
         existing_parameters = {
             parameter.template_detail["name"]: parameter
@@ -310,7 +309,7 @@ class PartImporter:
                     async_results.append(thread_pool.apply_async(
                         create_parameter, (self.api, part, parameter_template, value)
                     ))
-                else:
+                elif not self.dry_run:
                     warning(f"failed to find template parameter for '{name}'")
                     import_result |= ImportResult.INCOMPLETE
 
