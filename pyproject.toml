@@ -32,6 +32,16 @@ inventree-part-import = "inventree_part_import.cli:inventree_part_import"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+exclude = [
+  ".git",
+  ".gitignore",
+  ".gitmodules",
+  ".pre-commit-config.yaml",
+  "tests/",
+  "tasks.py",
+]
+
 [tool.autopep8]
 aggressive = 3
 max_line_length = 96
