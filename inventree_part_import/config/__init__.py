@@ -218,7 +218,8 @@ def setup_default_configuration_files(inventree_api):
                 parameters_config.touch()
 
 @contextmanager
-def update_config_file(config_path: Path):
+def update_config_file(file_name):
+    config_path = _CONFIG_DIR / file_name
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     try:
         yield config
@@ -235,7 +236,7 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
     if suppliers_config.is_file():
         suppliers_out = {}
         try:
-            with update_config_file(suppliers_config) as suppliers_config_data:
+            with update_config_file(SUPPLIERS_CONFIG) as suppliers_config_data:
                 for id, supplier_config in suppliers_config_data.items():
                     if supplier_config is None:
                         continue

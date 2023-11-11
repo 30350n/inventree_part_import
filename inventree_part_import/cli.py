@@ -105,7 +105,7 @@ def inventree_part_import(
     if configure:
         _, available_suppliers = get_suppliers()
         supplier = available_suppliers[configure]
-        with update_config_file(get_config_dir() / SUPPLIERS_CONFIG) as suppliers_config:
+        with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
             supplier_config = config if (config := suppliers_config.get(configure)) else {}
             new_config = update_supplier_config(supplier, supplier_config, force_update=True)
             if new_config:
