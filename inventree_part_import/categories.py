@@ -160,6 +160,9 @@ class Category:
     parameters: list[str] = field(default_factory=list)
     part_category: PartCategory = None
 
+    def __hash__(self):
+        return hash(tuple(self.path))
+
 CATEGORY_ATTRIBUTES = {"_parameters", "_description", "_ignore", "_structural", "_aliases"}
 def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
     if not categories_dict:

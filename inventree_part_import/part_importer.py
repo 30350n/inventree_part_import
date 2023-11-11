@@ -6,9 +6,10 @@ from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
 from inventree.part import Parameter, Part
 from requests.exceptions import HTTPError
+from thefuzz import fuzz
 
 from .categories import setup_categories_and_parameters
-from .config import CATEGORIES_CONFIG, get_config, get_pre_creation_hooks
+from .config import CATEGORIES_CONFIG, add_category_alias, get_config, get_pre_creation_hooks
 from .error_helper import *
 from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
                                 get_parameter_templates, get_part, get_supplier_part,
@@ -40,6 +41,8 @@ class PartImporter:
             category.part_category.pk: category
             for category in self.category_map.values()
         }
+
+        self.categories = set(self.category_map.values())
 
     def import_part(self, search_term, supplier_id=None, only_supplier=False):
         info(f"searching for {search_term} ...", end="\n")
@@ -102,7 +105,7 @@ class PartImporter:
         links = [f"({api_part.supplier_link})" for api_part in api_parts]
 
         choices = [*map(" ".join, zip(map(" | ".join, zip(mpns, manufacturers, skus)), links))]
-        choices.append("Skip ...")
+        choices.append(f"{ITALIC}Skip ...{ITALIC_END}")
 
         index = select(choices, deselected_prefix="  ", selected_prefix="> ")
         return [*api_parts, None][index]
@@ -190,8 +193,15 @@ class PartImporter:
                 if category := self.category_map.get(subcategory):
                     break
             else:
-                error(f"failed to match category for '{' / '.join(api_part.category_path)}'")
-                return ImportResult.FAILURE
+                path_str = f" {BOLD}/{BOLD_END} ".join(api_part.category_path)
+                if not self.interactive:
+                    error(f"failed to match category for '{path_str}'")
+                    return ImportResult.FAILURE
+
+                prompt(f"failed to match category for '{path_str}', select category")
+                if not (category := self.select_category(api_part.category_path)):
+                    return ImportResult.FAILURE
+                add_category_alias(category, api_part.category_path[-1])
 
             info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
             try:
@@ -212,6 +222,36 @@ class PartImporter:
         })
 
         return manufacturer_part, part
+
+    def select_category(self, category_path):
+        search_terms = [category_path[-1], " ".join(category_path[-2:])]
+
+        def rate_category(category):
+            return max(
+                fuzz.partial_ratio(term, name)
+                for name in (category.name, " ".join(category.path[-2:]))
+                for term in search_terms
+            )
+        category_matches = sorted(self.categories, key=rate_category, reverse=True)
+
+        N_MATCHES = 5
+        choices = (
+            *(" / ".join(category.path) for category in category_matches[:N_MATCHES]),
+            f"{ITALIC}Enter Manually ...{ITALIC_END}",
+            f"{ITALIC}Skip ...{ITALIC_END}"
+        )
+        while True:
+            index = select(choices, deselected_prefix="  ", selected_prefix="> ")
+            if index == N_MATCHES + 1:
+                return None
+            elif index < N_MATCHES:
+                return category_matches[index]
+
+            name = prompt_input("category name")
+            if (category := self.category_map.get(name)) and category.name == name:
+                return category
+            warning(f"category '{name}' does not exist")
+            prompt("select category")
 
     def setup_price_breaks(self, supplier_part, api_part: ApiPart):
         price_breaks = {
