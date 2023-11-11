@@ -388,7 +388,7 @@ def new_configuration_hint():
         _NEW_CONFIGURATION_HINT = False
 
 def yaml_dump(data, sort_keys=True):
-    yaml_data = yaml.safe_dump(data, indent=4, sort_keys=sort_keys)
+    yaml_data = yaml.safe_dump(data, indent=4, sort_keys=sort_keys, allow_unicode=True)
     yaml_data = YAML_REMOVE_NULL_REGEX.sub("", yaml_data)
     yaml_data = YAML_FIX_LIST_INDENTATION_REGEX.sub(YAML_FIX_LIST_INDENTATION_SUB, yaml_data)
     return yaml_data
