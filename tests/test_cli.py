@@ -40,7 +40,8 @@ class TestCli:
     def test_setup_categories(self):
         result = CliRunner().invoke(
             inventree_part_import,
-            ("-c", str(TEST_CONFIG_DIR), "TL072", "-v"),
+            ("-c", str(TEST_CONFIG_DIR), "TL072", "-v", "-i", "false"),
             catch_exceptions=False,
         )
+        assert "skipping import" in result.output
         assert "TL072" in result.output
