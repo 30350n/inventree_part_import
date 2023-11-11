@@ -289,9 +289,30 @@ class PartImporter:
         for api_part_parameter, value in api_part.parameters.items():
             for parameter in self.parameter_map.get(api_part_parameter, []):
                 name = parameter.name
-                if name not in matched_parameters and name in category.parameters:
+                if name in category.parameters and name not in matched_parameters:
                     matched_parameters[name] = value
-                    break
+
+        already_set_parameters = {
+            name for name, parameter in existing_parameters.items() if parameter.data}
+        unassigned_parameters = (
+            set(category.parameters) - set(matched_parameters) - already_set_parameters)
+
+        if unassigned_parameters and self.interactive:
+            prompt(f"failed to match some parameters from '{api_part.supplier_link}'", end="\n")
+            for parameter_name in unassigned_parameters.copy():
+                prompt(f"failed to match value for parameter '{parameter_name}', select value")
+                alias, value = self.select_parameter(parameter_name, api_part.parameters)
+                if value is None:
+                    continue
+                matched_parameters[parameter_name] = value
+                unassigned_parameters.remove(parameter_name)
+
+                if not alias:
+                    continue
+                if len(parameters := self.parameter_map.get(parameter_name, [])) == 1:
+                    parameters[0].add_alias(alias)
+                else:
+                    warning(f"failed to add alias '{alias}' for parameter '{parameter_name}'")
 
         thread_pool = ThreadPool(4)
         async_results = []
@@ -321,10 +342,6 @@ class PartImporter:
                 warning(warning_str)
                 import_result |= ImportResult.INCOMPLETE
 
-        already_set_parameters = {
-            name for name, parameter in existing_parameters.items() if parameter.data}
-        unassigned_parameters = (
-            set(category.parameters) - set(matched_parameters) - already_set_parameters)
         if unassigned_parameters:
             plural = "s" if len(unassigned_parameters) > 1 else ""
             warning(
@@ -334,6 +351,34 @@ class PartImporter:
             import_result |= ImportResult.INCOMPLETE
 
         return import_result
+
+    @staticmethod
+    def select_parameter(parameter_name, parameters) -> tuple[str, str]:
+        N_MATCHES = 5
+        parameter_matches_items = sorted(
+            parameters.items(),
+            key=lambda item: max(fuzz.partial_ratio(parameter_name, term) for term in item),
+            reverse=True
+        )
+        parameter_matches = dict(parameter_matches_items[:N_MATCHES])
+
+        max_value_length = max(len(str(value)) for value in parameter_matches.values())
+        values = [str(value).ljust(max_value_length) for value in parameter_matches.values()]
+        names = list(parameter_matches.keys())
+
+        choices = (
+            *(f"{value} | {BOLD}{name}{BOLD_END}" for value, name in zip(values, names)),
+            f"{BOLD}Enter Value Manually ...{BOLD_END}",
+            f"{BOLD}Skip ...{BOLD_END}"
+        )
+        index = select(choices, deselected_prefix="  ", selected_prefix="> ")
+        if index == N_MATCHES + 1:
+            return None, None
+        elif index < N_MATCHES:
+            return parameter_matches_items[index]
+
+        value = prompt_input("value")
+        return None, value
 
 def create_parameter(inventree_api, part, parameter_template, value):
     try:

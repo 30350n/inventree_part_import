@@ -229,6 +229,20 @@ class Parameter:
     aliases: list[str]
     units: str
 
+    def add_alias(self, alias):
+        self.aliases.append(alias)
+        with update_config_file(PARAMETERS_CONFIG) as parameters_config:
+            if (parameter_config := parameters_config.get(self.name)):
+                if aliases := parameter_config.get("_aliases"):
+                    aliases.append(alias)
+                else:
+                    parameter_config["_aliases"] = [alias]
+            else:
+                warning(
+                    f"failed to add alias '{alias}' for parameter '{self.name}' in "
+                    f"'{PARAMETERS_CONFIG}'"
+                )
+
 PARAMETER_ATTRIBUTES = {"_description", "_aliases", "_unit"}
 def parse_parameters(parameters_dict):
     if not parameters_dict:
