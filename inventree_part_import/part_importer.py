@@ -102,7 +102,7 @@ class PartImporter:
         links = [f"({api_part.supplier_link})" for api_part in api_parts]
 
         choices = [*map(" ".join, zip(map(" | ".join, zip(mpns, manufacturers, skus)), links))]
-        choices.append(f"{ITALIC}Skip ...{ITALIC_END}")
+        choices.append(f"{BOLD}Skip ...{BOLD_END}")
 
         index = select(choices, deselected_prefix="  ", selected_prefix="> ")
         return [*api_parts, None][index]
@@ -228,8 +228,8 @@ class PartImporter:
         N_MATCHES = 5
         choices = (
             *(" / ".join(category.path) for category in category_matches[:N_MATCHES]),
-            f"{ITALIC}Enter Manually ...{ITALIC_END}",
-            f"{ITALIC}Skip ...{ITALIC_END}"
+            f"{BOLD}Enter Manually ...{BOLD_END}",
+            f"{BOLD}Skip ...{BOLD_END}"
         )
         while True:
             index = select(choices, deselected_prefix="  ", selected_prefix="> ")
