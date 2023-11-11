@@ -106,9 +106,9 @@ INVENTREE_HOST_REGEX = re.compile(
 
 DEFAULT_CONFIG_VARS = {
     "max_results": 10,
+    "interactive": "twice",
     "request_timeout": 15.0,
     "retry_timeout": 3.0,
-    "interactive": "twice",
 }
 VALID_CONFIG_VARS = {"currency", "language", "location", "scraping", *DEFAULT_CONFIG_VARS}
 
@@ -370,10 +370,10 @@ def new_configuration_hint():
 
 def yaml_dump(data, sort_keys=True):
     yaml_data = yaml.safe_dump(data, indent=4, sort_keys=sort_keys)
-    yaml_data = YAML_REMOVE_EMPTY_DICTS_REGEX.sub("", yaml_data)
+    yaml_data = YAML_REMOVE_NULL_REGEX.sub("", yaml_data)
     yaml_data = YAML_FIX_LIST_INDENTATION_REGEX.sub(YAML_FIX_LIST_INDENTATION_SUB, yaml_data)
     return yaml_data
 
-YAML_REMOVE_EMPTY_DICTS_REGEX = re.compile(r" \{\}$", re.MULTILINE)
+YAML_REMOVE_NULL_REGEX = re.compile(r" (?:\{\}|null)", re.MULTILINE)
 YAML_FIX_LIST_INDENTATION_REGEX = re.compile(r"^(\s*)(- )", re.MULTILINE)
 YAML_FIX_LIST_INDENTATION_SUB = r"\g<1>    \g<2>"
