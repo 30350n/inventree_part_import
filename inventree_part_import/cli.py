@@ -226,7 +226,7 @@ def load_tabular_data(path: Path):
             elif sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
                 column_index = headers[sorted_headers[0]]
             else:
-                prompt("\nselect the column to import")
+                prompt("select the column to import")
                 index = select(sorted_headers, deselected_prefix="  ", selected_prefix="> ")
                 column_index = headers[sorted_headers[index]]
 
