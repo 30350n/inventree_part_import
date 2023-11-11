@@ -9,7 +9,7 @@ from requests.exceptions import HTTPError
 from thefuzz import fuzz
 
 from .categories import setup_categories_and_parameters
-from .config import CATEGORIES_CONFIG, add_category_alias, get_config, get_pre_creation_hooks
+from .config import CATEGORIES_CONFIG, get_config, get_pre_creation_hooks
 from .error_helper import *
 from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
                                 get_parameter_templates, get_part, get_supplier_part,
@@ -201,7 +201,7 @@ class PartImporter:
                 prompt(f"failed to match category for '{path_str}', select category")
                 if not (category := self.select_category(api_part.category_path)):
                     return ImportResult.FAILURE
-                add_category_alias(category, api_part.category_path[-1])
+                category.add_alias(api_part.category_path[-1])
 
             info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
             try:
@@ -228,7 +228,7 @@ class PartImporter:
 
         def rate_category(category):
             return max(
-                fuzz.partial_ratio(term, name)
+                fuzz.ratio(term, name)
                 for name in (category.name, " ".join(category.path[-2:]))
                 for term in search_terms
             )

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from inventree.part import ParameterTemplate, PartCategory, PartCategoryParameterTemplate
 
 from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config,
-                     get_parameters_config)
+                     get_parameters_config, update_config_file)
 from .error_helper import *
 
 def setup_categories_and_parameters(inventree_api):
@@ -162,6 +162,25 @@ class Category:
 
     def __hash__(self):
         return hash(tuple(self.path))
+
+    def add_alias(self, alias):
+        self.aliases.append(alias)
+        with update_config_file(CATEGORIES_CONFIG) as categories_config:
+            category_config = categories_config
+            try:
+                for sub_category_name in self.path:
+                    category_config = category_config[sub_category_name]
+
+                if aliases := category_config.get("_aliases"):
+                    aliases.append(alias)
+                else:
+                    categories_config["_aliases"] = [alias]
+
+            except KeyError:
+                warning(
+                    f"failed to add alias '{alias}' for category '{self.name}' in "
+                    f"'{CATEGORIES_CONFIG}'"
+                )
 
 CATEGORY_ATTRIBUTES = {"_parameters", "_description", "_ignore", "_structural", "_aliases"}
 def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):

@@ -173,24 +173,6 @@ def get_categories_config(inventree_api):
         error(e, prefix="")
         return None
 
-def add_category_alias(category, alias):
-    category.aliases.append(alias)
-    with update_config_file(CATEGORIES_CONFIG) as categories_config:
-        category_config = categories_config
-        for sub_category_name in category.path:
-            try:
-                category_config = category_config[sub_category_name]
-            except KeyError:
-                warning(
-                    f"failed to add alias '{alias}' for category '{category.name}' in "
-                    f"'{CATEGORIES_CONFIG}'"
-                )
-
-        if aliases := category_config.get("_aliases"):
-            aliases.append(alias)
-        else:
-            categories_config["_aliases"] = [alias]
-
 PARAMETERS_CONFIG = "parameters.yaml"
 def get_parameters_config(inventree_api):
     parameters_config = _CONFIG_DIR / PARAMETERS_CONFIG
