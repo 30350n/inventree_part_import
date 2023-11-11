@@ -70,7 +70,7 @@ def setup_inventree_api():
 
     inventree_api = None
     while not inventree_api:
-        prompt("setup your InvenTree API connection:", end="\n")
+        prompt("setup your InvenTree API connection")
 
         host = prompt_input("host")
         if not (match := INVENTREE_HOST_REGEX.fullmatch(host)):
@@ -139,7 +139,7 @@ def get_config(reload=False):
     info(f"failed to find {CONFIG} config file", end="\n")
     new_configuration_hint()
 
-    prompt("\nsetup your default configuration:", end="\n")
+    prompt("\nsetup your default configuration")
     currency = input_currency()
     language = input_language()
     location = input_location()
@@ -185,7 +185,7 @@ def get_parameters_config(inventree_api):
         return None
 
 def setup_default_configuration_files(inventree_api):
-    prompt("\nsetup default categories/parameters configuration:", end="\n")
+    prompt("\nsetup default categories/parameters configuration")
     choices = (
         "Copy categories from InvenTree",
         "Copy default categories configuration",
@@ -260,10 +260,7 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
     new_configuration_hint()
 
     suppliers_config_data = {}
-    prompt(
-        "\nselect the suppliers you want to setup: (SPACEBAR to toggle, ENTER to confirm)",
-        end="\n",
-    )
+    prompt("\nselect the suppliers you want to setup (SPACEBAR to toggle, ENTER to confirm)")
     selection = select_multiple(
         [supplier.name for supplier in suppliers.values()],
         ticked_indices=list(range(len(suppliers))),
@@ -299,7 +296,7 @@ def update_supplier_config(supplier: Supplier, supplier_config: dict, force_upda
 
     if force_update or None in new_supplier_config.values():
         if new_supplier_config:
-            prompt(f"\nsetup {supplier.name} configuration:", end="\n")
+            prompt(f"\nsetup {supplier.name} configuration")
             for name, default in new_supplier_config.items():
                 new_supplier_config[name] = input_default(name, default)
         success(f"setup {supplier.name} configuration!")

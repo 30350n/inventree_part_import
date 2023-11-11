@@ -58,8 +58,7 @@ class PartImporter:
             if len(results) == 1:
                 api_part = results[0]
             elif self.interactive:
-                prompt(f"found multiple parts at {supplier.name}, select which one to import:",
-                    end="\n")
+                prompt(f"found multiple parts at {supplier.name}, select which one to import")
                 results = results[:get_config()["max_results"]]
                 if result_count > len(results):
                     hint(f"found {result_count} results, only showing the first {len(results)}")
