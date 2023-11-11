@@ -217,7 +217,7 @@ def load_tabular_data(path: Path):
             }
             sorted_headers = sorted(
                 headers,
-                key=lambda header: max(fuzz.ratio(header, term) for term in MPN_HEADERS),
+                key=lambda header: max(fuzz.partial_ratio(header, mpn) for mpn in MPN_HEADERS),
                 reverse=True,
             )
 
