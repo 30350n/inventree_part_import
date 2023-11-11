@@ -187,7 +187,7 @@ class PartImporter:
             update_object_data(part, part_data, f"part {api_part.MPN}")
         else:
             for subcategory in reversed(api_part.category_path):
-                if (category := self.category_map.get(subcategory)) and not category.structural:
+                if category := self.category_map.get(subcategory):
                     break
             else:
                 error(f"failed to match category for '{' / '.join(api_part.category_path)}'")
