@@ -9,7 +9,7 @@ DigiKey, LCSC, Mouser, etc. into your InvenTree instance.
 ## Installation
 
 ```console
-pipx install git+https://github.com/30350n/inventree_part_import.git
+pipx install inventree-part-import
 ```
 
 *(`pip` should also work, but [`pipx`](https://github.com/pypa/pipx) is the new recommended way
