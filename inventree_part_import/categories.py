@@ -26,10 +26,11 @@ def setup_categories_and_parameters(inventree_api):
             warning(f"parameter '{name}' not defined in {PARAMETERS_CONFIG}")
             parameters[name] = Parameter(name, name, [], "")
 
-    part_categories = {
-        tuple(part_category.pathstring.split("/")): part_category
-        for part_category in PartCategory.list(inventree_api)
-    }
+    part_categories = {}
+    for part_category in PartCategory.list(inventree_api):
+        pathstring = part_category.pathstring
+        key = tuple(pathstring.split("/")) if pathstring else (part_category.name,)
+        part_categories[key] = part_category
 
     for category in categories.values():
         part_category = part_categories.get(tuple(category.path))
