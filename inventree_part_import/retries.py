@@ -40,7 +40,7 @@ def catch_timeouts(_retries: retries):
     try:
         yield
         _retries.stop()
-    except Timeout:
+    except (Timeout, ConnectionError):
         pass
     except HTTPError as e:
         status_code = None

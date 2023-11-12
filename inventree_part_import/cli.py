@@ -23,6 +23,8 @@ def handle_errors(func):
             error("Aborting Execution! (KeyboardInterrupt)", prefix="")
         except Timeout as e:
             error(f"connection timed out ({e})", prefix="FATAL: ")
+        except ConnectionError as e:
+            error(f"connection error ({e})", prefix="FATAL: ")
         except HTTPError as e:
             status_code = None
             if e.response is not None:

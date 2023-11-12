@@ -17,7 +17,7 @@ def test_max_retries():
     assert False, "unreachable"
 
 def test_error_types():
-    for i, retry in enumerate(retries(3, catch_timeouts, 0)):
+    for i, retry in enumerate(retries(4, catch_timeouts, 0)):
         with retry:
             match i:
                 case 0:
@@ -28,6 +28,8 @@ def test_error_types():
                     raise HTTPError(response=response)
                 case 2:
                     raise HTTPError({"status_code": 500})
+                case 3:
+                    raise ConnectionError()
 
     try:
         for retry in retries(3, catch_timeouts, 0):
