@@ -42,6 +42,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build]
 exclude = [
   ".git",
+  ".github/",
   ".gitignore",
   ".gitmodules",
   ".pre-commit-config.yaml",
