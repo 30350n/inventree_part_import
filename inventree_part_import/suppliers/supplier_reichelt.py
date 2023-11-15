@@ -111,7 +111,7 @@ class Reichelt(Supplier):
         return api_parts, len(api_parts)
 
     def get_api_part(self, soup, sku, link):
-        image_url = soup.find(id="av_bildbox").find(id="bigimages").find("img")["src"]
+        img_url = soup.find(id="av_bildbox").find(id="bigimages nohighlight").find("img")["src"]
 
         header = soup.find(id="av_articleheader")
         mpn = "".join(header.find().find_all(text=True, recursive=False)).replace(" ", "")
@@ -124,8 +124,8 @@ class Reichelt(Supplier):
         if price := soup.find("meta", itemprop="price"):
             price_breaks[1] = float(price["content"])
         if discounts := soup.find(id="av_price_discount"):
-            for discount in discounts.find("tbody").find_all("td")[1:]:
-                price, quantity = discount.find_all(text=True)
+            for discount in discounts.find("table").find_all("td")[1:]:
+                quantity, price = discount.find_all(text=True)
                 price_breaks[float(quantity)] = money2float(price.text)
 
         currency = None
@@ -134,7 +134,7 @@ class Reichelt(Supplier):
 
         api_part = ApiPart(
             description=header.find("span", itemprop="name").text,
-            image_url=image_url,
+            image_url=img_url,
             supplier_link=link,
             SKU=sku.upper(),
             manufacturer=None,
