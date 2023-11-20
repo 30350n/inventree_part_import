@@ -65,6 +65,16 @@ class DigiKey(Supplier):
         if len(exact_matches) == 1:
             return [self.get_api_part(exact_matches[0])], 1
 
+        if not exact_matches and product_count == 1 and len(filtered_results) > 1:
+            # the digikey api returns all product variants of the same product if the full MPN
+            # was not specified, in that case: pick the Cut Tape one if possible
+            for digikey_part in filtered_results:
+                packaging = digikey_part.packaging.value
+                if "Cut Tape" in packaging or "CT" in packaging:
+                    return [self.get_api_part(digikey_part)], 1
+            return [self.get_api_part(filtered_results[0])], 1
+
+        product_count = max(product_count, len(filtered_results))
         return list(map(self.get_api_part, filtered_results)), product_count
 
     def get_api_part(self, digikey_part):
