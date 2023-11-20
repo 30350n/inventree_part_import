@@ -29,11 +29,13 @@ class TME(Supplier):
         filtered_matches = [
             tme_part for tme_part in results["ProductList"]
             if tme_part["OriginalSymbol"].lower().startswith(search_term.lower())
+            or tme_part["Symbol"].lower().startswith(search_term.lower())
         ]
 
         exact_matches = [
             tme_part for tme_part in filtered_matches
             if tme_part["OriginalSymbol"].lower() == search_term.lower()
+            or tme_part["Symbol"].lower() == search_term.lower()
         ]
         if len(exact_matches) == 1:
             filtered_matches = exact_matches
