@@ -59,9 +59,8 @@ class Reichelt(Supplier):
             mpn = result.find("meta", itemprop="productID")["content"].replace(" ", "")
 
             if len(search_results) > 1:
-                if not (
-                    search_term.lower() in sku.lower() or search_term.lower() in mpn.lower()
-                ):
+                search_lower = search_term.lower()
+                if not (search_lower in sku.lower() or search_lower in mpn.lower()):
                     continue
 
             availability = result.find("p", class_="availability").find("span")["class"][0]
