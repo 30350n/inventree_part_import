@@ -5,7 +5,7 @@ from requests import Session
 from ..config import get_config
 from ..error_helper import *
 from .base import ApiPart, Supplier
-from .scrape import scrape
+from .scrape import REMOVE_HTML_TAGS, scrape
 
 API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
 CURRENCY_URL     = f"{API_BASE_URL}home/currency?currencyCode={{}}"
@@ -36,11 +36,13 @@ class LCSC(Supplier):
             filtered_matches = [
                 product for product in products["productList"]
                 if product["productModel"].lower().startswith(search_term.lower())
+                or product["productCode"].lower() == search_term.lower()
             ]
 
             exact_matches = [
                 product for product in filtered_matches
                 if product["productModel"].lower() == search_term.lower()
+                or product["productCode"].lower() == search_term.lower()
             ]
             if self.ignore_duplicates:
                 exact_filtered = [
@@ -129,8 +131,6 @@ class LCSC(Supplier):
 
     def setup_hook(self, session: Session):
         session.get(CURRENCY_URL.format(self.currency), timeout=get_config()["request_timeout"])
-
-REMOVE_HTML_TAGS = re.compile(r"<.*?>")
 
 CLEANUP_URL_ID_REGEX = re.compile(r"[^\w\d\.]")
 def cleanup_url_id(url):

@@ -7,7 +7,7 @@ from mouser.api import MouserPartSearchRequest
 from ..error_helper import *
 from ..retries import retry_timeouts
 from .base import ApiPart, Supplier, money2float
-from .scrape import DOMAIN_REGEX, DOMAIN_SUB, scrape
+from .scrape import DOMAIN_REGEX, DOMAIN_SUB, REMOVE_HTML_TAGS, scrape
 
 class Mouser(Supplier):
     def setup(self, api_key, currency, scraping, locale_url="www.mouser.com"):
@@ -72,7 +72,7 @@ class Mouser(Supplier):
             quantity_available = 0
 
         api_part = ApiPart(
-            description=mouser_part.get("Description", ""),
+            description=REMOVE_HTML_TAGS.sub("", mouser_part.get("Description", "")),
             image_url=mouser_part.get("ImagePath"),
             supplier_link=supplier_link,
             SKU=mouser_part_number,

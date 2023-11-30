@@ -64,3 +64,5 @@ def setup_session(setup_hook=None) -> Session:
 
 DOMAIN_REGEX = re.compile(r"(https?://)(?:[^./]*\.?)*/")
 DOMAIN_SUB = "\\g<1>{}/"
+
+REMOVE_HTML_TAGS = re.compile(r"<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});")
