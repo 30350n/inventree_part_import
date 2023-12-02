@@ -170,9 +170,11 @@ class Category:
     def add_alias(self, alias):
         self.aliases.append(alias)
         with update_config_file(CATEGORIES_CONFIG) as categories_config:
-            category_config = categories_config
             try:
+                category_config = categories_config
                 for sub_category_name in self.path:
+                    if category_config[sub_category_name] is None:
+                        category_config[sub_category_name] = {}
                     category_config = category_config[sub_category_name]
 
                 if aliases := category_config.get("_aliases"):
@@ -233,16 +235,13 @@ class Parameter:
     def add_alias(self, alias):
         self.aliases.append(alias)
         with update_config_file(PARAMETERS_CONFIG) as parameters_config:
-            if (parameter_config := parameters_config.get(self.name)):
-                if aliases := parameter_config.get("_aliases"):
-                    aliases.append(alias)
-                else:
-                    parameter_config["_aliases"] = [alias]
+            if (parameter_config := parameters_config.get(self.name)) is None:
+                parameter_config = parameters_config[self.name] = {}
+
+            if aliases := parameter_config.get("_aliases"):
+                aliases.append(alias)
             else:
-                warning(
-                    f"failed to add alias '{alias}' for parameter '{self.name}' in "
-                    f"'{PARAMETERS_CONFIG}'"
-                )
+                parameter_config["_aliases"] = [alias]
 
 PARAMETER_ATTRIBUTES = {"_description", "_aliases", "_unit"}
 def parse_parameters(parameters_dict):
