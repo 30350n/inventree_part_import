@@ -180,7 +180,7 @@ class Category:
                 if aliases := category_config.get("_aliases"):
                     aliases.append(alias)
                 else:
-                    categories_config["_aliases"] = [alias]
+                    category_config["_aliases"] = [alias]
 
             except KeyError:
                 warning(
