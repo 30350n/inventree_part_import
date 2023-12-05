@@ -309,10 +309,17 @@ class PartImporter:
 
                 if not alias:
                     continue
-                if len(parameters := self.parameter_map.get(parameter_name, [])) == 1:
-                    parameters[0].add_alias(alias)
-                else:
+                if not (params := self.parameter_map.get(parameter_name)) or len(params) != 1:
                     warning(f"failed to add alias '{alias}' for parameter '{parameter_name}'")
+                    continue
+
+                parameter = params[0]
+                parameter.add_alias(alias)
+
+                if existing := self.parameter_map.get(alias):
+                    existing.append(parameter)
+                else:
+                    self.parameter_map[alias] = [parameter]
 
         thread_pool = ThreadPool(4)
         async_results = []
