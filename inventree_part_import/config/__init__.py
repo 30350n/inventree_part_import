@@ -291,10 +291,12 @@ def update_supplier_config(supplier: Supplier, supplier_config: dict, force_upda
 
     new_supplier_config = {}
     for name, param_default in supplier._get_setup_params().items():
-        if (value := global_config.get(name)) is not None:
+        if (value := supplier_config.get(name, param_default)) is not None:
+            new_supplier_config[name] = value
+        elif (value := global_config.get(name)) is not None:
             used_global_settings[name] = value
         else:
-            new_supplier_config[name] = supplier_config.get(name, param_default)
+            new_supplier_config[name] = None
 
     if force_update or None in new_supplier_config.values():
         if new_supplier_config:
