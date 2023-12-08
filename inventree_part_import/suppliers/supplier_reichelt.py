@@ -15,7 +15,7 @@ LOCALE_CHANGE_URL = f"{BASE_URL}index.html?ACTION=12&PAGE=46"
 SEARCH_URL = f"{BASE_URL}index.html?ACTION=446&q={{}}"
 
 class Reichelt(Supplier):
-    def setup(self, language, location, scraping):
+    def setup(self, language, location, scraping, max_results):
         if location not in LOCATION_MAP:
             error(f"failed to load '{self.name}' module (unsupported location '{location}')")
             return False
@@ -31,71 +31,38 @@ class Reichelt(Supplier):
             rf";CCOUNTRY={LOCATION_MAP[self.location]};LANGUAGE={self.language};CTYPE=1;"
         )
 
+        self.max_results = max_results
+
         return True
 
     def search(self, search_term):
-        setup = self.setup_hook
         if SKU_REGEX.fullmatch(search_term):
             sku_link = f"{self.localized_url}-{search_term}.html"
-            if sku_page := scrape(sku_link, setup_hook=setup):
-                sku_page_soup = BeautifulSoup(sku_page.content, "html.parser")
-                return [self.get_api_part(sku_page_soup, search_term, sku_link)], 1
+            if product_page := scrape(sku_link, setup_hook=self.setup_hook):
+                product_page_soup = BeautifulSoup(product_page.content, "html.parser")
+                return [self.get_api_part(product_page_soup, search_term, sku_link)], 1
 
-        if not (result := scrape(SEARCH_URL.format(quote(search_term)), setup_hook=setup)):
+        search_safe = quote(search_term, safe="")
+        if not (result := scrape(SEARCH_URL.format(search_safe), setup_hook=self.setup_hook)):
             return [], 0
 
-        soup = BeautifulSoup(result.content, "html.parser")
+        search_soup = BeautifulSoup(result.content, "html.parser")
 
         api_parts = []
-        search_results = soup.find_all("div", class_="al_gallery_article")
-        for result in search_results:
-            image_url = result.find("div", class_="al_artlogo").find("img")["data-original"]
-            image_url = IMAGE_URL_FULLSIZE_REGEX.sub(IMAGE_URL_FULLSIZE_SUB, image_url)
-
+        search_results = search_soup.find_all("div", class_="al_gallery_article")
+        for result in search_results[:self.max_results]:
             product_url = result.find("a", itemprop="url")["href"]
             sku = PRODUCT_URL_SKU_REGEX.match(product_url).group(1).upper()
-            supplier_link = f"{self.localized_url}-{sku.lower()}.html"
 
-            mpn = result.find("meta", itemprop="productID")["content"].replace(" ", "")
+            sku_link = f"{self.localized_url}-{sku.lower()}.html"
+            if not (product_page := scrape(sku_link, setup_hook=self.setup_hook)):
+                continue
 
-            if len(search_results) > 1:
-                search_lower = search_term.lower()
-                if not (search_lower in sku.lower() or search_lower in mpn.lower()):
-                    continue
+            product_page_soup = BeautifulSoup(product_page.content, "html.parser")
+            api_part = self.get_api_part(product_page_soup, sku, sku_link)
 
-            availability = result.find("p", class_="availability").find("span")["class"][0]
-            if availability not in AVAILABILITY_MAP:
-                warning(f"unknown reichelt availability '{availability}' ({supplier_link})")
-
-            price_breaks = {}
-            if price := result.find("span", itemprop="price"):
-                price_breaks[1] = money2float(price.text)
-            if discounts := result.find("ul", _class="discounts"):
-                for discount in discounts.find_all("li"):
-                    price, quantity = discount.find_all("span")
-                    price_breaks[float(quantity)] = money2float(price.text)
-
-            currency = None
-            if meta := result.find("meta", itemprop="priceCurrency"):
-                currency = meta["content"]
-
-            api_part = ApiPart(
-                description=result.find("meta", itemprop="name")["content"],
-                image_url=image_url,
-                supplier_link=supplier_link,
-                SKU=sku,
-                manufacturer=None,
-                manufacturer_link="",
-                MPN=mpn,
-                quantity_available=AVAILABILITY_MAP.get(availability),
-                packaging="",
-                category_path=None,
-                parameters=None,
-                price_breaks=price_breaks,
-                currency=currency,
-            )
-
-            api_part.finalize_hook = MethodType(self.finalize_hook, api_part)
+            if len(search_results) > 1 and search_term.lower() not in api_part.MPN.lower():
+                continue
 
             api_parts.append(api_part)
 
@@ -105,19 +72,39 @@ class Reichelt(Supplier):
             or api_part.MPN.lower() == search_term.lower()
         ]
         if len(exact_matches) == 1:
-            return exact_matches[0], 1
+            return [exact_matches[0]], 1
 
-        return api_parts, len(api_parts)
+        n_results = len(search_results)
+        return api_parts, n_results if n_results > self.max_results else len(api_parts)
 
     def get_api_part(self, soup, sku, link):
+        description = soup.find(id="av_articleheader").find("span", itemprop="name").text
         img_url = soup.find(id="av_bildbox").find(id="bigimages nohighlight").find("img")["src"]
-
-        header = soup.find(id="av_articleheader")
-        mpn = "".join(header.find().find_all(text=True, recursive=False)).replace(" ", "")
 
         availability = soup.find("p", class_="availability").find("span")["class"][0]
         if availability not in AVAILABILITY_MAP:
             warning(f"unknown reichelt availability '{availability}' ({link})")
+
+        breadcrumb = soup.find("ol", id="breadcrumb")
+        category_path = [
+            li.find("a").text
+            for li in breadcrumb.find_all("li", itemprop="itemListElement")[1:]
+        ]
+
+        parameters = {
+            prop_name.text.strip(): prop_value.text.strip()
+            for ul in soup.find("div", id="av_props_inline").find_all("ul", class_="clearfix")
+            if (prop_name := ul.find("li", "av_propname"))
+            and (prop_value := ul.find("li", "av_propvalue"))
+        }
+
+        if not (manufacturer := parameters.get("Manufacturer")):
+            manufacturer = "Reichelt"
+
+        if not (mpn := parameters.get("Factory number")):
+            mpn = soup.find("meta", itemprop="productID")["content"].replace(" ", "")
+            if mpn.startswith("mpn:"):
+                mpn = mpn[4:]
 
         price_breaks = {}
         if price := soup.find("meta", itemprop="price"):
@@ -131,58 +118,21 @@ class Reichelt(Supplier):
         if meta := soup.find("meta", itemprop="priceCurrency"):
             currency = meta["content"]
 
-        api_part = ApiPart(
-            description=header.find("span", itemprop="name").text,
+        return ApiPart(
+            description=description,
             image_url=img_url,
             supplier_link=link,
             SKU=sku.upper(),
-            manufacturer=None,
+            manufacturer=manufacturer,
             manufacturer_link="",
             MPN=mpn,
             quantity_available=AVAILABILITY_MAP.get(availability),
             packaging="",
-            category_path=None,
-            parameters=None,
+            category_path=category_path,
+            parameters=parameters,
             price_breaks=price_breaks,
             currency=currency,
         )
-
-        self.finalize_hook(api_part, soup)
-
-        return api_part
-
-    def finalize_hook(self, api_part: ApiPart, soup=None):
-        if not soup:
-            if not (result := scrape(api_part.supplier_link, setup_hook=self.setup_hook)):
-                return False
-            soup = BeautifulSoup(result.content, "html.parser")
-
-        breadcrumb = soup.find("ol", id="breadcrumb")
-        api_part.category_path = [
-            li.find("a").text
-            for li in breadcrumb.find_all("li", itemprop="itemListElement")[1:]
-        ]
-
-        api_part.parameters = {
-            prop_name.text.strip(): prop_value.text.strip()
-            for ul in soup.find("div", id="av_props_inline").find_all("ul", class_="clearfix")
-            if (prop_name := ul.find("li", "av_propname"))
-            and (prop_value := ul.find("li", "av_propvalue"))
-        }
-
-        if manufacturer := api_part.parameters.get("Manufacturer"):
-            api_part.manufacturer = manufacturer
-        else:
-            api_part.manufacturer = "Reichelt"
-
-        if mpn := api_part.parameters.get("Factory number"):
-            api_part.MPN = mpn
-
-        if not api_part.price_breaks:
-            if price := soup.find("meta", itemprop="price"):
-                api_part.price_breaks = {1: float(price["content"])}
-
-        return True
 
     def setup_hook(self, session: Session):
         request_timeout = get_config()["request_timeout"]
@@ -209,12 +159,15 @@ IMAGE_URL_FULLSIZE_SUB = "/images/"
 SKU_REGEX = re.compile(r"^[pP]\d+$")
 PRODUCT_URL_SKU_REGEX = re.compile(r"^.*([pP]\d+)\.html[^\.]*$")
 
+# None -> available, 0 -> not available
 AVAILABILITY_MAP = {
     "status_1": None,
     "status_2": 0,
+    "status_3": None,
     "status_4": None,
     "status_5": 0,
     "status_6": 0,
+    "status_7": None,
     "status_8": 0,
 }
 
