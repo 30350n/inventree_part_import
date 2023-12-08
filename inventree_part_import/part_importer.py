@@ -9,11 +9,11 @@ from requests.exceptions import HTTPError
 from thefuzz import fuzz
 
 from .categories import setup_categories_and_parameters
-from .config import CATEGORIES_CONFIG, get_config, get_pre_creation_hooks
+from .config import CATEGORIES_CONFIG, CONFIG, get_config, get_pre_creation_hooks
 from .error_helper import *
 from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
                                 get_parameter_templates, get_part, get_supplier_part,
-                                update_object_data, upload_image)
+                                update_object_data, upload_datasheet, upload_image)
 from .suppliers import search
 from .suppliers.base import ApiPart
 
@@ -143,6 +143,16 @@ class PartImporter:
         if not self.dry_run:
             if not part.image and api_part.image_url:
                 upload_image(part, api_part.image_url)
+
+            attachment_types = {attachment.comment for attachment in part.getAttachments()}
+            if "datasheet" not in attachment_types and api_part.datasheet_url:
+                match get_config().get("datasheets"):
+                    case "upload":
+                        upload_datasheet(part, api_part.datasheet_url)
+                    case None | False:
+                        pass
+                    case invalid_mode:
+                        warning(f"invalid value 'datasheets: {invalid_mode}' in {CONFIG}")
 
         if api_part.parameters:
             result = self.setup_parameters(part, api_part, update_part)

@@ -103,6 +103,7 @@ class DigiKey(Supplier):
         return ApiPart(
             description=digikey_part.product_description,
             image_url=digikey_part.primary_photo,
+            datasheet_url=digikey_part.primary_datasheet,
             supplier_link=digikey_part.product_url,
             SKU=digikey_part.digi_key_part_number,
             manufacturer=digikey_part.manufacturer.value,

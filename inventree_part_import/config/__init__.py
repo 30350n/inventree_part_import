@@ -105,12 +105,19 @@ INVENTREE_HOST_REGEX = re.compile(
     r"^(?P<scheme>[^:/\s]+://)?(?P<hostname>[^:/\s]+)(?::(?P<port>\d{1,5}))?(?P<path>/.*)?$")
 
 DEFAULT_CONFIG_VARS = {
-    "max_results": 10,
     "interactive": "twice",
+    "max_results": 10,
     "request_timeout": 15.0,
     "retry_timeout": 3.0,
 }
-VALID_CONFIG_VARS = {"currency", "language", "location", "scraping", *DEFAULT_CONFIG_VARS}
+VALID_CONFIG_VARS = {
+    "currency",
+    "language",
+    "location",
+    "scraping",
+    "datasheets",
+    *DEFAULT_CONFIG_VARS,
+}
 
 _CONFIG_LOADED = None
 CONFIG = "config.yaml"
@@ -143,16 +150,26 @@ def get_config(reload=False):
     currency = input_currency()
     language = input_language()
     location = input_location()
+
     prompt("do you want to enable web scraping? (this is required to use some suppliers)",
         prefix="", end="\n")
     warning("enabling scraping can get you temporarily blocked sometimes")
     scraping = prompt_yes_or_no("enable scraping?", default_is_yes=True)
+
+    prompt("how do you want to handle datasheets?")
+    datasheets_choices = [
+        "upload (upload file attachments for parts)",
+        "false  (do not add datasheets for parts)",
+    ]
+    datasheets_values = ["upload", False]
+    datasheets_index = select(datasheets_choices, deselected_prefix="  ", selected_prefix="> ")
 
     _CONFIG_LOADED = {
         "currency": currency,
         "language": language,
         "location": location,
         "scraping": scraping,
+        "datasheets": datasheets_values[datasheets_index],
         **DEFAULT_CONFIG_VARS,
     }
     yaml_data = yaml_dump(_CONFIG_LOADED, sort_keys=False)

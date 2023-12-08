@@ -10,6 +10,7 @@ from ..config import get_pre_creation_hooks
 class ApiPart:
     description: str
     image_url: str
+    datasheet_url: str
     supplier_link: str
     SKU: str
     manufacturer: str

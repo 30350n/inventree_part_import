@@ -52,6 +52,7 @@ class TME(Supplier):
         api_part = ApiPart(
             description=tme_part.get("Description", ""),
             image_url=fix_tme_url(tme_part.get("Photo")),
+            datasheet_url=None,
             supplier_link=fix_tme_url(tme_part.get("ProductInformationPage")),
             SKU=tme_part.get("Symbol", ""),
             manufacturer=tme_part.get("Producer", ""),
@@ -72,11 +73,16 @@ class TME(Supplier):
     def finalize_hook(self, api_part: ApiPart):
         if not (parameters := self.tme_api.get_parameters(api_part.SKU)):
             return False
-
         api_part.parameters = {
             parameter["ParameterName"]: parameter["ParameterValue"]
             for parameter in parameters
         }
+
+        if product_files := self.tme_api.get_product_files(api_part.SKU):
+            for document in product_files.get("DocumentList", []):
+                if document.get("DocumentType") == "DTE":
+                    api_part.datasheet_url = fix_tme_url(document.get("DocumentUrl"))
+                    break
 
         return True
 
@@ -159,6 +165,16 @@ class TMEApi:
             return result_data["ProductList"]
         return []
 
+    def get_categories(self):
+        result = self._api_call("Products/GetCategories", {
+            "Country": self.country,
+            "Language": self.language,
+            "Tree": "false",
+        })
+        if result:
+            return result.json()["Data"]["CategoryTree"]
+        return []
+
     def get_parameters(self, product_symbol):
         result = self._api_call("Products/GetParameters", {
             "Country": self.country,
@@ -169,14 +185,14 @@ class TMEApi:
             return result.json()["Data"]["ProductList"][0]["ParameterList"]
         return []
 
-    def get_categories(self):
-        result = self._api_call("Products/GetCategories", {
+    def get_product_files(self, product_symbol):
+        result = self._api_call("Products/GetProductsFiles", {
             "Country": self.country,
             "Language": self.language,
-            "Tree": "false",
+            "SymbolList[0]": product_symbol,
         })
         if result:
-            return result.json()["Data"]["CategoryTree"]
+            return result.json()["Data"]["ProductList"][0]["Files"]
         return []
 
     HEADERS = {"Content-type": "application/x-www-form-urlencoded"}

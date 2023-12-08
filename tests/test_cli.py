@@ -39,7 +39,7 @@ class TestCli:
         self.api = InvenTreeAPI(HOST, username=USERNAME, password=PASSWORD, use_token_auth=True)
 
         (TEST_CONFIG_DIR / CONFIG).write_text(
-            "currency: EUR\nlanguage: EN\nlocation: DE\nscraping: true\n")
+            "currency: EUR\nlanguage: EN\nlocation: DE\nscraping: true\ndatasheets: upload\n")
         (TEST_CONFIG_DIR / INVENTREE_CONFIG).write_text(
             f"host: {HOST}\ntoken: {self.api.token}\n")
         (TEST_CONFIG_DIR / SUPPLIERS_CONFIG).write_text(

@@ -116,6 +116,7 @@ class LCSC(Supplier):
         return ApiPart(
             description=REMOVE_HTML_TAGS.sub("", description),
             image_url=image_url,
+            datasheet_url=lcsc_part.get("pdfUrl"),
             supplier_link=supplier_link,
             SKU=lcsc_part.get("productCode", ""),
             manufacturer=lcsc_part.get("brandNameEn", ""),

@@ -1,5 +1,7 @@
+from base64 import urlsafe_b64encode
 from dataclasses import dataclass
 from functools import cache
+from hashlib import sha256
 import re
 
 from inventree.api import InvenTreeAPI
@@ -9,7 +11,7 @@ from inventree.company import ManufacturerPart, SupplierPart
 from inventree.part import ParameterTemplate, Part
 from platformdirs import user_cache_path
 import requests
-from requests.compat import urlparse
+from requests.compat import unquote, urlparse
 from requests.exceptions import HTTPError, Timeout
 
 from .error_helper import *
@@ -93,27 +95,48 @@ def download_image_content(api_object: ImageMixin):
 
 def upload_image(api_object: ImageMixin, image_url: str):
     info("uploading image ...")
-    if not (image_content := _download_image_content(image_url)):
+    image_content, redirected_url = _download_file_content(image_url)
+    if not image_content:
         warning(f"failed to download image from '{image_url}'")
         return
 
-    url_path = urlparse(image_url).path
-    if "." in url_path:
-        file_extension = url_path.rsplit(".")[-1]
-    else:
-        file_extension = image_url.rsplit(".")[-1]
+    file_extension = url2filename(redirected_url).split(".")[-1]
     if not file_extension.isalnum():
         warning(f"failed to get file extension for image from '{image_url}'")
         return
 
-    image_path = INVENTREE_CACHE / f"temp_image.{file_extension}"
-    with open(image_path, "wb") as file:
-        file.write(image_content)
+    image_hash = urlsafe_b64encode(sha256(image_content).digest()).decode()
+    image_path = INVENTREE_CACHE / f"{image_hash}.{file_extension}"
+    image_path.write_bytes(image_content)
 
     try:
         api_object.uploadImage(str(image_path))
     except HTTPError as e:
         warning(f"failed to upload image with: {e.args[0]['body']}")
+
+def upload_datasheet(part: Part, datasheet_url: str):
+    info("uploading datasheet ...")
+    datasheet_content, redirected_url = _download_file_content(datasheet_url)
+    if not datasheet_content:
+        warning(f"failed to download datasheet from '{datasheet_url}'")
+        return
+
+    file_name = url2filename(redirected_url)
+    file_extension = file_name.split(".")[-1]
+    if file_extension != "pdf":
+        warning(f"datasheet '{datasheet_url}' has invalid file extension '{file_extension}'")
+        return
+
+    datasheet_path = INVENTREE_CACHE / file_name
+    datasheet_path.write_bytes(datasheet_content)
+
+    try:
+        part.uploadAttachment(str(datasheet_path), "datasheet")
+    except HTTPError as e:
+        warning(f"failed to upload datasheet with: {e.args[0]['body']}")
+
+def url2filename(url):
+    return unquote(urlparse(url).path.split("/")[-1])
 
 DOWNLOAD_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -129,7 +152,7 @@ class TLSv1_2HTTPAdapter(requests.adapters.HTTPAdapter):
         )
 
 @cache
-def _download_image_content(url):
+def _download_file_content(url):
     session = requests.Session()
     session.mount("https://", TLSv1_2HTTPAdapter())
 
@@ -139,10 +162,10 @@ def _download_image_content(url):
                 result = session.get(url, headers=DOWNLOAD_HEADERS)
                 result.raise_for_status()
     except (HTTPError, Timeout) as e:
-        warning(f"failed to download image with '{e}'")
+        warning(f"failed to download file with '{e}'")
         return None
 
-    return result.content
+    return result.content, result.url
 
 @dataclass
 class Company:

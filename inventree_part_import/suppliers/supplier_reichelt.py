@@ -3,7 +3,7 @@ from types import MethodType
 
 from bs4 import BeautifulSoup
 from requests import Session
-from requests.compat import quote
+from requests.compat import quote, urljoin
 
 from ..config import get_config
 from ..error_helper import *
@@ -79,7 +79,12 @@ class Reichelt(Supplier):
 
     def get_api_part(self, soup, sku, link):
         description = soup.find(id="av_articleheader").find("span", itemprop="name").text
-        img_url = soup.find(id="av_bildbox").find(id="bigimages nohighlight").find("img")["src"]
+
+        bigimage = soup.find(id="av_bildbox").find(id="bigimages nohighlight")
+        image_url = bigimage.find("img")["src"] if bigimage else None
+
+        datasheet = soup.find(id="av_datasheetview").find(class_="av_datasheet")
+        datasheet_url = urljoin(BASE_URL, datasheet.find("a")["href"]) if datasheet else None
 
         availability = soup.find("p", class_="availability").find("span")["class"][0]
         if availability not in AVAILABILITY_MAP:
@@ -120,7 +125,8 @@ class Reichelt(Supplier):
 
         return ApiPart(
             description=description,
-            image_url=img_url,
+            image_url=image_url,
+            datasheet_url=datasheet_url,
             supplier_link=link,
             SKU=sku.upper(),
             manufacturer=manufacturer,
