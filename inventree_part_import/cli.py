@@ -180,9 +180,9 @@ def inventree_part_import(
                 case ImportResult.INCOMPLETE:
                     incomplete_parts.append(part)
 
-        if interactive == "twice" and last_import_result != ImportResult.ERROR:
+        parts2 = [*failed_parts, *incomplete_parts]
+        if parts2 and interactive == "twice" and last_import_result != ImportResult.ERROR:
             success("reimporting failed/incomplete parts in interactive mode ...\n", prefix="")
-            parts2 = (*failed_parts, *incomplete_parts)
             failed_parts = []
             incomplete_parts = []
 
