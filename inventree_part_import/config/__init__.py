@@ -159,9 +159,10 @@ def get_config(reload=False):
     prompt("how do you want to handle datasheets?")
     datasheets_choices = [
         "upload (upload file attachments for parts)",
+        "link   (add external link attachments to parts)",
         "false  (do not add datasheets for parts)",
     ]
-    datasheets_values = ["upload", False]
+    datasheets_values = ["upload", "link", False]
     datasheets_index = select(datasheets_choices, deselected_prefix="  ", selected_prefix="> ")
 
     _CONFIG_LOADED = {

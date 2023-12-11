@@ -149,6 +149,8 @@ class PartImporter:
                 match get_config().get("datasheets"):
                     case "upload":
                         upload_datasheet(part, api_part.datasheet_url)
+                    case "link":
+                        part.addLinkAttachment(api_part.datasheet_url, comment="datasheet")
                     case None | False:
                         pass
                     case invalid_mode:

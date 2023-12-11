@@ -19,7 +19,7 @@ dependencies = [
   "cutie",
   "digikey-api>=1.0",
   "fake-useragent",
-  "inventree>=0.12",
+  "inventree>=0.13.2",
   "isocodes",
   "mouser>=0.1.5",
   "platformdirs",
