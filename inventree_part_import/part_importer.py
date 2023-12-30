@@ -5,6 +5,7 @@ import re
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
 from inventree.part import Parameter, Part
+from requests.compat import quote
 from requests.exceptions import HTTPError
 from thefuzz import fuzz
 
@@ -150,7 +151,8 @@ class PartImporter:
                     case "upload":
                         upload_datasheet(part, api_part.datasheet_url)
                     case "link":
-                        part.addLinkAttachment(api_part.datasheet_url, comment="datasheet")
+                        datasheet_url_safe = quote(api_part.datasheet_url, safe=":/")
+                        part.addLinkAttachment(datasheet_url_safe, comment="datasheet")
                     case None | False:
                         pass
                     case invalid_mode:
