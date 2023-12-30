@@ -136,7 +136,10 @@ def upload_datasheet(part: Part, datasheet_url: str):
         warning(f"failed to upload datasheet with: {e.args[0]['body']}")
 
 def url2filename(url):
-    return unquote(urlparse(url).path.split("/")[-1])
+    parsed = urlparse(url)
+    if "." not in parsed.path:
+        parsed = urlparse(url.replace("https://", "scheme://"))
+    return unquote(parsed.path.split("/")[-1])
 
 DOWNLOAD_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
