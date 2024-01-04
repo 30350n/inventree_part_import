@@ -22,7 +22,7 @@ dependencies = [
   "inventree>=0.13.2",
   "isocodes",
   "mouser>=0.1.5",
-  "platformdirs",
+  "platformdirs>=3.2.0",
   "pyyaml",
   "requests",
   "tablib",
