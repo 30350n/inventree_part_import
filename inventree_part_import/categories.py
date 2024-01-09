@@ -20,7 +20,7 @@ def setup_categories_and_parameters(inventree_api):
 
     for name in parameters:
         if name not in used_parameters:
-            warning(f"parameter '{name}' is defined in {CATEGORIES_CONFIG} but not being used")
+            warning(f"parameter '{name}' is defined in {PARAMETERS_CONFIG} but not being used")
     for name in used_parameters:
         if name not in parameters:
             warning(f"parameter '{name}' not defined in {PARAMETERS_CONFIG}")
@@ -93,13 +93,6 @@ def setup_categories_and_parameters(inventree_api):
                 "description": parameter.description,
                 "units": parameter.units,
             })
-
-    for parameter_template in parameter_templates:
-        if parameter_template not in used_parameters:
-            warning(
-                f"parameter template '{parameter_template}' on host "
-                f"is not defined in {CATEGORIES_CONFIG}"
-            )
 
     category_parameters = {
         (tuple(category.path), param)
