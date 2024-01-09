@@ -8,7 +8,7 @@ from inventree.api import InvenTreeAPI
 from inventree.base import ImageMixin, InventreeObject
 from inventree.company import Company as InventreeCompany
 from inventree.company import ManufacturerPart, SupplierPart
-from inventree.part import ParameterTemplate, Part
+from inventree.part import ParameterTemplate, Part, PartCategory
 from platformdirs import user_cache_path
 import requests
 from requests.compat import unquote, urlparse
@@ -44,6 +44,22 @@ def get_part(inventree_api: InvenTreeAPI, name):
 
     assert len(parts) == 0
     return None
+
+def get_category(inventree_api: InvenTreeAPI, category_path):
+    name = category_path.split("/")[-1]
+    for category in PartCategory.list(inventree_api, search=name):
+        if category.pathstring == category_path:
+            return category
+
+    return None
+
+def get_category_parts(part_category: PartCategory, cascade):
+    return Part.list(
+        part_category._api,
+        category=part_category.pk,
+        cascade=cascade,
+        purchaseable=True,
+    )
 
 FILTER_SPECIAL_CHARS_REGEX = re.compile(r"([^\\])([\[\].^$*+?{}|()])")
 FILTER_SPECIAL_CHARS_SUB = r"\g<1>\\\g<2>"

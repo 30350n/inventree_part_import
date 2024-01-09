@@ -12,6 +12,7 @@ from . import error_helper
 from .config import (CONFIG, SUPPLIERS_CONFIG, get_config, get_config_dir, set_config_dir,
                      setup_inventree_api, update_config_file, update_supplier_config)
 from .error_helper import *
+from .inventree_helpers import get_category, get_category_parts
 from .part_importer import ImportResult, PartImporter
 from .suppliers import get_suppliers, setup_supplier_companies
 
@@ -52,11 +53,15 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
     "Enable interactive mode. 'twice' will run once normally, then rerun in interactive "
     "mode for any parts that failed to import correctly."
 ))
-@click.option("-d", "--dry", is_flag=True, help="Run without connecting to InvenTree database.")
+@click.option("-d", "--dry", is_flag=True, help="Run without modifying InvenTree database.")
 @click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
+@click.option("--update", metavar="CATEGORY", help="Update all parts from InvenTree CATEGORY.")
+@click.option("--update-recursive", metavar="CATEGORY",
+    help="Update all parts from InvenTree CATEGORY and from any of it's subcategories."
+)
 @handle_errors
 def inventree_part_import(
     context,
@@ -69,6 +74,8 @@ def inventree_part_import(
     verbose=False,
     show_config_dir=False,
     configure=None,
+    update=None,
+    update_recursive=None,
 ):
     """Import supplier parts into InvenTree.
 
@@ -114,7 +121,7 @@ def inventree_part_import(
                 suppliers_config[configure] = new_config
         return
 
-    if not inputs:
+    if not inputs and not (update or update_recursive):
         click.echo(context.get_help())
         return
 
@@ -131,24 +138,6 @@ def inventree_part_import(
         supplier = only
         only_supplier = True
 
-    parts = []
-    for name in inputs:
-        path = Path(name)
-        if path.is_file():
-            if (file_parts := load_tabular_data(path)) is None:
-                return
-            parts += file_parts
-        elif path.exists():
-            warning(f"skipping '{path}' (path exists, but is not a file)")
-        else:
-            parts.append(name)
-
-    parts = list(filter(bool, (part.strip() for part in parts)))
-
-    if not parts:
-        info("nothing to import.")
-        return
-
     if not verbose:
         error_helper.INFO_END = "\r"
 
@@ -158,10 +147,49 @@ def inventree_part_import(
     else:
         inventree_api = setup_inventree_api()
 
+    category_path = update_recursive or update
+    if category_path:
+        if update_recursive and update:
+            hint("--update is being overridden by --update-recursive")
+
+        recursive_str = "-recursive" if update_recursive else ""
+        if dry:
+            error(f"--update{recursive_str} does not work with --dry")
+            return
+        if inputs:
+            hint(f"--update{recursive_str} is set, other inputs will be ignored")
+
+        if not (category := get_category(inventree_api, category_path)):
+            error(f"no such category '{category_path}'")
+            return
+        parts = [part.name for part in get_category_parts(category, bool(update_recursive))]
+    else:
+        parts = []
+        for name in inputs:
+            path = Path(name)
+            if path.is_file():
+                if (file_parts := load_tabular_data(path)) is None:
+                    return
+                parts += file_parts
+            elif path.exists():
+                warning(f"skipping '{path}' (path exists, but is not a file)")
+            else:
+                parts.append(name)
+
+        parts = list(filter(bool, (part.strip() for part in parts)))
+
+    if not parts:
+        info("nothing to import.")
+        return
+
     # make sure suppliers.yaml exists
     get_suppliers(reload=True)
     setup_supplier_companies(inventree_api)
     importer = PartImporter(inventree_api, interactive=interactive == "true")
+
+    if update or update_recursive:
+        info(f"updating {len(parts)} parts from '{category_path}'", end="\n")
+        print()
 
     failed_parts = []
     incomplete_parts = []
@@ -204,7 +232,8 @@ def inventree_part_import(
             warning(f"the following parts are incomplete:\n{incomplete_parts_str}\n", prefix="")
 
     if not failed_parts and not incomplete_parts:
-        success("imported all parts!")
+        action = "updated" if update or update_recursive else "imported"
+        success(f"{action} all parts")
 
 MPN_HEADERS = ("Manufacturer Part Number", "MPN")
 def load_tabular_data(path: Path):
