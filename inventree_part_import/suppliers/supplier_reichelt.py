@@ -83,8 +83,10 @@ class Reichelt(Supplier):
         bigimage = soup.find(id="av_bildbox").find(id="bigimages nohighlight")
         image_url = bigimage.find("img")["src"] if bigimage else None
 
-        datasheet = soup.find(id="av_datasheetview").find(class_="av_datasheet")
-        datasheet_url = urljoin(BASE_URL, datasheet.find("a")["href"]) if datasheet else None
+        datasheet_url = None
+        if datasheet_view := soup.find(id="av_datasheetview"):
+            if datasheet := datasheet_view.find(class_="av_datasheet"):
+                datasheet_url = urljoin(BASE_URL, datasheet.find("a")["href"])
 
         availability = soup.find("p", class_="availability").find("span")["class"][0]
         if availability not in AVAILABILITY_MAP:
