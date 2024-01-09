@@ -50,11 +50,16 @@ FILTER_SPECIAL_CHARS_SUB = r"\g<1>\\\g<2>"
 
 def update_object_data(obj: InventreeObject, data: dict, info_label=""):
     for name, value in data.items():
-        if value != type(value)(obj[name]):
-            if info_label:
-                info(f"updating {info_label} ...")
-            obj.save(data)
-            return
+        try:
+            if value == type(value)(obj[name]):
+                continue
+        except TypeError:
+            pass
+
+        if info_label:
+            info(f"updating {info_label} ...")
+        obj.save(data)
+        return
 
 @cache
 def get_parameter_templates(inventree_api: InvenTreeAPI):

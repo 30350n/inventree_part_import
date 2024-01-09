@@ -114,20 +114,22 @@ class PartImporter:
         part = None
         if supplier_part := get_supplier_part(self.api, api_part.SKU):
             info(f"found existing {supplier.name} part {supplier_part.SKU} ...")
-            manufacturer_part = ManufacturerPart(self.api, supplier_part.manufacturer_part)
         else:
             info(f"importing {supplier.name} part {api_part.SKU} ...")
-            if manufacturer_part := get_manufacturer_part(self.api, api_part.MPN):
-                pass
-            elif self.existing_manufacturer_part:
-                manufacturer_part = self.existing_manufacturer_part
-            else:
-                if not api_part.finalize():
-                    return ImportResult.FAILURE
-                result = self.create_manufacturer_part(api_part)
-                if isinstance(result, ImportResult):
-                    return result
-                manufacturer_part, part = result
+
+        if supplier_part and supplier_part.manufacturer_part is not None:
+            manufacturer_part = ManufacturerPart(self.api, supplier_part.manufacturer_part)
+        elif manufacturer_part := get_manufacturer_part(self.api, api_part.MPN):
+            pass
+        elif self.existing_manufacturer_part:
+            manufacturer_part = self.existing_manufacturer_part
+        else:
+            if not api_part.finalize():
+                return ImportResult.FAILURE
+            result = self.create_manufacturer_part(api_part)
+            if isinstance(result, ImportResult):
+                return result
+            manufacturer_part, part = result
 
         update_part = (
             not self.existing_manufacturer_part
@@ -166,10 +168,14 @@ class PartImporter:
 
         supplier_part_data = api_part.get_supplier_part_data()
         if supplier_part:
-            updating = True
-            update_object_data(supplier_part, supplier_part_data, f"{supplier.name} part")
+            action_str = "updated"
+            update_object_data(
+                supplier_part,
+                {"manufacturer_part": manufacturer_part.pk, **supplier_part_data},
+                f"{supplier.name} part"
+            )
         else:
-            updating = False
+            action_str = "added"
             try:
                 supplier_part = SupplierPart.create(self.api, {
                     "part": 0 if self.dry_run else part.pk,
@@ -185,8 +191,7 @@ class PartImporter:
         self.setup_price_breaks(supplier_part, api_part)
 
         url = self.api.base_url + supplier_part.url[1:]
-        actioned = "updated" if updating else "added"
-        success(f"{actioned} {supplier.name} part {supplier_part.SKU} ({url})")
+        success(f"{action_str} {supplier.name} part {supplier_part.SKU} ({url})")
         return import_result
 
     def create_manufacturer_part(self, api_part: ApiPart) -> tuple[ManufacturerPart, Part]:
