@@ -73,10 +73,14 @@ class TME(Supplier):
     def finalize_hook(self, api_part: ApiPart):
         if not (parameters := self.tme_api.get_parameters(api_part.SKU)):
             return False
-        api_part.parameters = {
-            parameter["ParameterName"]: parameter["ParameterValue"]
-            for parameter in parameters
-        }
+
+        api_part.parameters = {}
+        for parameter in parameters:
+            name = parameter["ParameterName"]
+            value = parameter["ParameterValue"]
+            if existing_value := api_part.parameters.get(name):
+                value = ", ".join((existing_value, value))
+            api_part.parameters[name] = value
 
         if product_files := self.tme_api.get_product_files(api_part.SKU):
             for document in product_files.get("DocumentList", []):
