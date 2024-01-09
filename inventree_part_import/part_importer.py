@@ -48,7 +48,13 @@ class PartImporter:
         }
         self.categories = set(self.category_map.values())
 
-    def import_part(self, search_term, supplier_id=None, only_supplier=False):
+    def import_part(
+            self,
+            search_term,
+            existing_part: Part = None,
+            supplier_id=None,
+            only_supplier=False
+        ):
         info(f"searching for {search_term} ...", end="\n")
         import_result = ImportResult.SUCCESS
 
@@ -78,7 +84,7 @@ class PartImporter:
                 continue
 
             try:
-                import_result |= self.import_supplier_part(supplier, api_part)
+                import_result |= self.import_supplier_part(supplier, api_part, existing_part)
             except HTTPError as e:
                 import_result = ImportResult.ERROR
 
@@ -128,10 +134,9 @@ class PartImporter:
         index = select(choices, deselected_prefix="  ", selected_prefix="> ")
         return [*api_parts, None][index]
 
-    def import_supplier_part(self, supplier: Company, api_part: ApiPart):
+    def import_supplier_part(self, supplier: Company, api_part: ApiPart, part: Part = None):
         import_result = ImportResult.SUCCESS
 
-        part = None
         if supplier_part := get_supplier_part(self.api, api_part.SKU):
             info(f"found existing {supplier.name} part {supplier_part.SKU} ...")
         else:
@@ -140,13 +145,14 @@ class PartImporter:
         if supplier_part and supplier_part.manufacturer_part is not None:
             manufacturer_part = ManufacturerPart(self.api, supplier_part.manufacturer_part)
         elif manufacturer_part := get_manufacturer_part(self.api, api_part.MPN):
-            pass
+            if part and manufacturer_part.part != part.pk:
+                update_object_data(manufacturer_part, {"part": part.pk})
         elif self.existing_manufacturer_part:
             manufacturer_part = self.existing_manufacturer_part
         else:
             if not api_part.finalize():
                 return ImportResult.FAILURE
-            result = self.create_manufacturer_part(api_part)
+            result = self.create_manufacturer_part(api_part, part)
             if isinstance(result, ImportResult):
                 return result
             manufacturer_part, part = result
@@ -155,15 +161,15 @@ class PartImporter:
             not self.existing_manufacturer_part
             or self.existing_manufacturer_part.pk != manufacturer_part.pk
         )
-        if not part and not self.dry_run:
-            part = Part(self.api, manufacturer_part.part)
+        if not self.dry_run:
+            if not part:
+                part = Part(self.api, manufacturer_part.part)
 
             if update_part:
                 if not api_part.finalize():
                     return ImportResult.FAILURE
                 update_object_data(part, api_part.get_part_data(), f"part {api_part.MPN}")
 
-        if not self.dry_run:
             if not part.image and api_part.image_url:
                 upload_image(part, api_part.image_url)
 
@@ -214,9 +220,13 @@ class PartImporter:
         success(f"{action_str} {supplier.name} part {supplier_part.SKU} ({url})")
         return import_result
 
-    def create_manufacturer_part(self, api_part: ApiPart) -> tuple[ManufacturerPart, Part]:
+    def create_manufacturer_part(
+        self,
+        api_part: ApiPart,
+        part: Part = None,
+    ) -> tuple[ManufacturerPart, Part]:
         part_data = api_part.get_part_data()
-        if part := get_part(self.api, api_part.MPN):
+        if part or (part := get_part(self.api, api_part.MPN)):
             update_object_data(part, part_data, f"part {api_part.MPN}")
         else:
             for subcategory in reversed(api_part.category_path):

@@ -3,6 +3,7 @@ from pathlib import Path
 import click
 from cutie import select
 from inventree.api import InvenTreeAPI
+from inventree.part import Part
 from requests.exceptions import HTTPError, Timeout
 from tablib import import_set
 from tablib.exceptions import TablibException, UnsupportedFormat
@@ -147,8 +148,7 @@ def inventree_part_import(
     else:
         inventree_api = setup_inventree_api()
 
-    category_path = update_recursive or update
-    if category_path:
+    if (category_path := update_recursive or update):
         if update_recursive and update:
             hint("--update is being overridden by --update-recursive")
 
@@ -162,7 +162,7 @@ def inventree_part_import(
         if not (category := get_category(inventree_api, category_path)):
             error(f"no such category '{category_path}'")
             return
-        parts = [part.name for part in get_category_parts(category, bool(update_recursive))]
+        parts = [part for part in get_category_parts(category, bool(update_recursive))]
     else:
         parts = []
         for name in inputs:
@@ -196,7 +196,11 @@ def inventree_part_import(
 
     try:
         for index, part in enumerate(parts):
-            last_import_result = importer.import_part(part, supplier, only_supplier)
+            last_import_result = (
+                importer.import_part(part.name, part, supplier, only_supplier)
+                if isinstance(part, Part) else
+                importer.import_part(part, None, supplier, only_supplier)
+            )
             print()
             match last_import_result:
                 case ImportResult.ERROR:
@@ -216,7 +220,12 @@ def inventree_part_import(
 
             importer.interactive = True
             for part in parts2:
-                match importer.import_part(part, supplier, only_supplier):
+                import_result = (
+                    importer.import_part(part.name, part, supplier, only_supplier)
+                    if isinstance(part, Part) else
+                    importer.import_part(part, None, supplier, only_supplier)
+                )
+                match import_result:
                     case ImportResult.ERROR | ImportResult.FAILURE:
                         failed_parts.append(part)
                     case ImportResult.INCOMPLETE:
@@ -225,15 +234,19 @@ def inventree_part_import(
 
     finally:
         if failed_parts:
-            failed_parts_str = "\n".join(failed_parts)
+            failed_parts_str = "\n".join(
+                (part.name if isinstance(part, Part) else part for part in failed_parts)
+            )
             error(f"the following parts failed to import:\n{failed_parts_str}\n", prefix="")
         if incomplete_parts:
-            incomplete_parts_str = "\n".join(incomplete_parts)
+            incomplete_parts_str = "\n".join(
+                (part.name if isinstance(part, Part) else part for part in incomplete_parts)
+            )
             warning(f"the following parts are incomplete:\n{incomplete_parts_str}\n", prefix="")
 
     if not failed_parts and not incomplete_parts:
         action = "updated" if update or update_recursive else "imported"
-        success(f"{action} all parts")
+        success(f"{action} all parts!")
 
 MPN_HEADERS = ("Manufacturer Part Number", "MPN")
 def load_tabular_data(path: Path):
