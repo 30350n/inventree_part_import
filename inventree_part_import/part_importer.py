@@ -1,6 +1,8 @@
 from enum import Enum
+import json
 from multiprocessing.pool import ThreadPool
 import re
+import traceback
 
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
@@ -28,9 +30,10 @@ class ImportResult(Enum):
         return self if self.value < other.value else other
 
 class PartImporter:
-    def __init__(self, inventree_api, interactive=False):
+    def __init__(self, inventree_api, interactive=False, verbose=False):
         self.api = inventree_api
         self.interactive = interactive
+        self.verbose = verbose
         self.dry_run = hasattr(inventree_api, "DRY_RUN")
 
         # preload pre_creation_hooks
@@ -74,7 +77,24 @@ class PartImporter:
                 import_result |= ImportResult.INCOMPLETE
                 continue
 
-            import_result |= self.import_supplier_part(supplier, api_part)
+            try:
+                import_result |= self.import_supplier_part(supplier, api_part)
+            except HTTPError as e:
+                import_result = ImportResult.ERROR
+
+                error_str = "'unknown HTTPError'"
+                if e.args and isinstance(e.args[0], dict) and (body := e.args[0].get("body")):
+                    try:
+                        error_str = "\n" + "\n".join((
+                            f"    {key}: {value}\n" for key, value in json.loads(body).items()
+                        ))
+                    except json.JSONDecodeError:
+                        pass
+                error(f"failed to import part with: {error_str}")
+
+                if self.verbose:
+                    error(traceback.format_exc(), prefix="FULL TRACEBACK:\n")
+
             if import_result == ImportResult.ERROR:
                 # let the other api calls finish
                 for _, other_results in search_results:
