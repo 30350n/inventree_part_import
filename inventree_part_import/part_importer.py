@@ -145,8 +145,7 @@ class PartImporter:
         if supplier_part and supplier_part.manufacturer_part is not None:
             manufacturer_part = ManufacturerPart(self.api, supplier_part.manufacturer_part)
         elif manufacturer_part := get_manufacturer_part(self.api, api_part.MPN):
-            if part and manufacturer_part.part != part.pk:
-                update_object_data(manufacturer_part, {"part": part.pk})
+            pass
         elif self.existing_manufacturer_part:
             manufacturer_part = self.existing_manufacturer_part
         else:
@@ -164,6 +163,8 @@ class PartImporter:
         if not self.dry_run:
             if not part:
                 part = Part(self.api, manufacturer_part.part)
+            elif part.pk != manufacturer_part.part:
+                update_object_data(manufacturer_part, {"part": part.pk})
 
             if update_part:
                 if not api_part.finalize():
