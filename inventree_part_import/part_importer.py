@@ -180,7 +180,7 @@ class PartImporter:
                         upload_datasheet(part, api_part.datasheet_url)
                     case "link":
                         datasheet_url_safe = quote(api_part.datasheet_url, safe=":/")
-                        part.addLinkAttachment(datasheet_url_safe, comment="datasheet")
+                        part.addLinkAttachment(datasheet_url_safe[:200], comment="datasheet")
                     case None | False:
                         pass
                     case invalid_mode:
