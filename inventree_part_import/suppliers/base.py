@@ -37,7 +37,7 @@ class ApiPart:
         return {
             "name": self.MPN,
             "description": self.description,
-            "link": self.manufacturer_link,
+            "link": self.manufacturer_link[:200],
             "active": True,
             "component": True,
             "purchaseable": True,
@@ -47,13 +47,13 @@ class ApiPart:
         return {
             "MPN": self.MPN,
             "description": self.description,
-            "link": self.manufacturer_link,
+            "link": self.manufacturer_link[:200],
         }
 
     def get_supplier_part_data(self):
         data = {
             "description": self.description,
-            "link": self.supplier_link,
+            "link": self.supplier_link[:200],
             "packaging": self.packaging,
         }
         if self.quantity_available:
