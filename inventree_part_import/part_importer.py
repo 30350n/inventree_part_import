@@ -193,27 +193,19 @@ class PartImporter:
 
         self.existing_manufacturer_part = manufacturer_part
 
-        supplier_part_data = api_part.get_supplier_part_data()
+        supplier_part_data = {
+            "part": 0 if self.dry_run else part.pk,
+            "manufacturer_part": manufacturer_part.pk,
+            "supplier": supplier.pk,
+            "SKU": api_part.SKU,
+            **api_part.get_supplier_part_data(),
+        }
         if supplier_part:
             action_str = "updated"
-            update_object_data(
-                supplier_part,
-                {"manufacturer_part": manufacturer_part.pk, **supplier_part_data},
-                f"{supplier.name} part"
-            )
+            update_object_data(supplier_part, supplier_part_data, f"{supplier.name} part")
         else:
             action_str = "added"
-            try:
-                supplier_part = SupplierPart.create(self.api, {
-                    "part": 0 if self.dry_run else part.pk,
-                    "manufacturer_part": manufacturer_part.pk,
-                    "supplier": supplier.pk,
-                    "SKU": api_part.SKU,
-                    **supplier_part_data,
-                })
-            except HTTPError as e:
-                error(f"failed to create {supplier.name} part with: {e.args[0]['body']}")
-                return ImportResult.ERROR
+            supplier_part = SupplierPart.create(self.api, supplier_part_data)
 
         self.setup_price_breaks(supplier_part, api_part)
 
@@ -245,14 +237,7 @@ class PartImporter:
                 category.add_alias(api_part.category_path[-1])
 
             info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
-            try:
-                part = Part.create(self.api, {
-                    "category": category.part_category.pk,
-                    **part_data,
-                })
-            except HTTPError as e:
-                error(f"failed to create part with: {e.args[0]['body']}")
-                return ImportResult.ERROR
+            part = Part.create(self.api, {"category": category.part_category.pk, **part_data})
 
         manufacturer = create_manufacturer(self.api, api_part.manufacturer)
         info(f"creating manufacturer part {api_part.MPN} ...")
