@@ -14,13 +14,13 @@ from .base import ApiPart, Supplier
 class TME(Supplier):
     def setup(self, api_token, api_secret, currency, language, location):
         self.tme_api = TMEApi(api_token, api_secret, language, location, currency)
-        self.currency = currency
         return True
 
     def search(self, search_term):
         tme_part = self.tme_api.get_product(search_term)
         if tme_part:
-            tme_stock = self.tme_api.get_prices_and_stocks([tme_part["Symbol"]])[0]
+            tme_stocks = self.tme_api.get_prices_and_stocks([tme_part["Symbol"]])
+            tme_stock = tme_stocks[0] if tme_stocks else {}
             return [self.get_api_part(tme_part, tme_stock)], 1
 
         if not (results := self.tme_api.product_search(search_term)):
@@ -63,7 +63,7 @@ class TME(Supplier):
             category_path=self.tme_api.get_category_path(tme_part["CategoryId"]),
             parameters=None,
             price_breaks=price_breaks,
-            currency=self.currency,
+            currency=self.tme_api.currency,
         )
 
         api_part.finalize_hook = MethodType(self.finalize_hook, api_part)
