@@ -30,17 +30,6 @@ class DigiKey(Supplier):
     def search(self, search_term):
         for retry in retry_timeouts():
             with retry:
-                digikey_part = digikey.product_details(
-                    search_term,
-                    x_digikey_locale_currency=self.currency,
-                    x_digikey_locale_site=self.location,
-                    x_digikey_locale_language=self.language,
-                )
-        if digikey_part:
-            return [self.get_api_part(digikey_part)], 1
-
-        for retry in retry_timeouts():
-            with retry:
                 results = digikey.keyword_search(
                     body=KeywordSearchRequest(keywords=search_term, record_count=10),
                     x_digikey_locale_currency=self.currency,
