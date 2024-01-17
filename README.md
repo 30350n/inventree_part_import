@@ -56,18 +56,18 @@ You can also create your own configuration from scratch (or manually copy
 
 ### Basic Usage
 
-To import parts, simply use the `inventree_part_import` command, followed by the supplier or
+To import parts, simply use the `inventree-part-import` command, followed by the supplier or
 manufacturer part numbers of the parts you want to import.
 
 ```console
-$ inventree_part_import <part_number_1> <part_number_2> ...
+$ inventree-part-import <part_number_1> <part_number_2> ...
 ```
 
 You can also batch import multiple parts from tabular data files (`.csv`, `.xlsx`, etc.) like
 so:
 
 ```console
-$ inventree_part_import parts.csv
+$ inventree-part-import parts.csv
 ```
 
 ## Configuration
@@ -102,7 +102,7 @@ The following parameters are always available:
 - `location`: overrides the location for searching this supplier (see [`config.yaml`](#configyaml))
 
 Additionally suppliers can have extra parameters for authentifcation to their respective APIs.
-These can be set via the CLI like so: `inventree_part_import --configure <supplier>`.
+These can be set via the CLI like so: `inventree-part-import --configure <supplier>`.
 
 #### DigiKey
 
@@ -139,7 +139,7 @@ Additionally you can define the following meta attributes (starting with `_`):
 
 - `_aliases` has to be a list of supplier category names which will be mapped to that category
 - `_description` specifies the categories description (defaults to category name)
-- `_ignore` makes `inventree_part_import` ignore that category, as well as any subcategories
+- `_ignore` makes `inventree-part-import` ignore that category, as well as any subcategories
 - `_parameters` has to be a list of parameter names (for parameters defined in
   [`parameters.yaml`](#parametersyaml)) this category uses<br>
   **note: parameters get inherited by sub categories**
