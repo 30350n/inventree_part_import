@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import click
-from cutie import select
+from cutie import prompt_yes_or_no, select
 from inventree.api import InvenTreeAPI
 from inventree.part import Part
 from requests.exceptions import HTTPError, Timeout
@@ -251,36 +251,56 @@ def inventree_part_import(
 MPN_HEADERS = ("Manufacturer Part Number", "MPN")
 def load_tabular_data(path: Path):
     info(f"reading {path.name} ...")
-    with path.open() as file:
-        try:
+    try:
+        with path.open() as file:
             data = import_set(file)
-            headers = {
-                stripped: i
-                for i, header in enumerate(data.headers)
-                if (stripped := header.strip())
-            }
-            sorted_headers = sorted(
-                headers,
-                key=lambda header: max(fuzz.partial_ratio(header, mpn) for mpn in MPN_HEADERS),
-                reverse=True,
-            )
 
-            if len(sorted_headers) == 0:
-                column_index = 0
-            elif sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
-                column_index = headers[sorted_headers[0]]
-            else:
-                prompt("select the column to import")
-                index = select(sorted_headers, deselected_prefix="  ", selected_prefix="> ")
-                column_index = headers[sorted_headers[index]]
+        headers = {
+            stripped: i
+            for i, header in enumerate(data.headers)
+            if (stripped := header.strip())
+        }
+        sorted_headers = sorted(
+            headers,
+            key=lambda header: max(fuzz.partial_ratio(header, mpn) for mpn in MPN_HEADERS),
+            reverse=True,
+        )
 
-            return data.get_col(column_index)
-        except UnsupportedFormat:
-            error(f"{path.suffix} is not a supported file format")
-            return None
-        except TablibException as e:
-            error(f"failed to parse file with '{e.__doc__}'")
-            return None
+        if len(sorted_headers) == 0:
+            column_index = 0
+        elif sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
+            column_index = headers[sorted_headers[0]]
+        else:
+            prompt("select the column to import")
+            index = select(sorted_headers, deselected_prefix="  ", selected_prefix="> ")
+            column_index = headers[sorted_headers[index]]
+
+        return data.get_col(column_index)
+
+    except UnsupportedFormat:
+        # try to import the file as a single column csv file
+        if data := load_single_column_csv(path):
+            return data
+
+        error(f"{path.suffix} is not a supported file format")
+        return None
+    except TablibException as e:
+        error(f"failed to parse file with '{e.__doc__}'")
+        return None
+
+def load_single_column_csv(path: Path):
+    if path.suffix not in {".csv", ".txt", ""}:
+        return
+    content = path.read_text()
+    if content.count(",") >= content.count("\n"):
+        return
+
+    data = content.split("\n")
+    info(f"importing '{path.name}' as single column csv file", end="\n")
+    has_header = prompt_yes_or_no(
+        f"is the first row '{data[0]}' a header?", default_is_yes=True
+    )
+    return data[1:] if has_header else data
 
 DRY_MODE_WARNING = (
     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
