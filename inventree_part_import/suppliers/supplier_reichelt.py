@@ -115,7 +115,7 @@ class Reichelt(Supplier):
 
         price_breaks = {}
         if price := soup.find("meta", itemprop="price"):
-            price_breaks[1] = float(price["content"])
+            price_breaks[1] = float(price["content"].replace(",", ""))
         if discounts := soup.find(id="av_price_discount"):
             for discount in discounts.find("table").find_all("td")[1:]:
                 quantity, price = discount.find_all(text=True)
