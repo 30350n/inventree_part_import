@@ -1,6 +1,6 @@
+import hmac
 from base64 import b64encode
 from hashlib import sha1
-import hmac
 from types import MethodType
 
 import requests

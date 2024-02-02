@@ -1,8 +1,6 @@
+import json, re, traceback
 from enum import Enum
-import json
 from multiprocessing.pool import ThreadPool
-import re
-import traceback
 
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak

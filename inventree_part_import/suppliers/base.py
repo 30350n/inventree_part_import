@@ -1,8 +1,7 @@
+import inspect, re
 from dataclasses import dataclass
 from functools import cache
-import inspect
 from inspect import _empty
-import re
 
 from ..config import get_pre_creation_hooks
 

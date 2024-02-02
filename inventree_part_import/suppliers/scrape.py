@@ -1,5 +1,4 @@
-import re
-import time
+import re, time
 
 from fake_useragent import UserAgent
 from requests import Response, Session

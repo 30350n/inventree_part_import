@@ -1,11 +1,10 @@
+import re, shutil
 from pathlib import Path
-import re
-import shutil
 
+import yaml
 from click.testing import CliRunner
 from inventree.api import InvenTreeAPI
 from inventree.part import ParameterTemplate, PartCategory
-import yaml
 
 from inventree_part_import.categories import setup_config_from_inventree
 from inventree_part_import.cli import inventree_part_import

@@ -1,19 +1,16 @@
 from __future__ import annotations
 
+import importlib.util, re, shutil, sys
 from contextlib import contextmanager
-import importlib.util
 from inspect import isfunction
 from pathlib import Path
-import re
-import shutil
-import sys
 from typing import TYPE_CHECKING
 
+import yaml
 from cutie import prompt_yes_or_no, secure_input, select, select_multiple
 from isocodes import countries, currencies, languages
 from platformdirs import user_config_path
 from requests.exceptions import HTTPError, Timeout
-import yaml
 from yaml.error import MarkedYAMLError
 
 if TYPE_CHECKING:

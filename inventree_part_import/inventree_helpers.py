@@ -1,16 +1,16 @@
+import re
 from base64 import urlsafe_b64encode
 from dataclasses import dataclass
 from functools import cache
 from hashlib import sha256
-import re
 
+import requests
 from inventree.api import InvenTreeAPI
 from inventree.base import ImageMixin, InventreeObject
 from inventree.company import Company as InventreeCompany
 from inventree.company import ManufacturerPart, SupplierPart
 from inventree.part import ParameterTemplate, Part, PartCategory
 from platformdirs import user_cache_path
-import requests
 from requests.compat import unquote, urlparse
 from requests.exceptions import HTTPError, Timeout
 

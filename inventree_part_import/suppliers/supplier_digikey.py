@@ -1,5 +1,4 @@
-import logging
-import os
+import logging, os
 
 import digikey
 from digikey.v3.productinformation import KeywordSearchRequest, ProductDetailsResponse

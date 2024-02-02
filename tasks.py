@@ -1,8 +1,7 @@
-import sys
-import time
+import sys, time
 
-from invoke import task
 import requests
+from invoke import task
 from requests.auth import HTTPBasicAuth
 
 # this file is a minimal version of

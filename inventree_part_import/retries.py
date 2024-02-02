@@ -1,5 +1,5 @@
-from contextlib import contextmanager
 import time
+from contextlib import contextmanager
 
 from inventree.api import InvenTreeAPI
 from requests.exceptions import HTTPError, Timeout
