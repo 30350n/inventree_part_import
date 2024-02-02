@@ -25,7 +25,7 @@ dependencies = [
   "platformdirs>=3.2.0",
   "pyyaml",
   "requests",
-  "tablib",
+  "tablib[ods, xls, xlsx]",
   "thefuzz",
 ]
 
