@@ -1,3 +1,4 @@
+import importlib.metadata
 from pathlib import Path
 
 import click, tablib, tablib.formats
@@ -62,6 +63,7 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
 @click.option("--update-recursive", metavar="CATEGORY",
     help="Update all parts from InvenTree CATEGORY and from any of it's subcategories."
 )
+@click.option("--version", is_flag=True, help="Show version and exit.")
 @handle_errors
 def inventree_part_import(
     context,
@@ -76,6 +78,7 @@ def inventree_part_import(
     configure=None,
     update=None,
     update_recursive=None,
+    version=False,
 ):
     """Import supplier parts into InvenTree.
 
@@ -84,6 +87,10 @@ def inventree_part_import(
 
     from inventree.api import logger
     logger.disabled = True
+
+    if version:
+        print(importlib.metadata.version(__package__))
+        return
 
     if config_dir:
         try:
