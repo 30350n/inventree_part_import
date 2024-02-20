@@ -187,7 +187,7 @@ def _download_file_content(url):
                 result.raise_for_status()
     except (HTTPError, Timeout) as e:
         warning(f"failed to download file with '{e}'")
-        return None
+        return None, None
 
     return result.content, result.url
 
