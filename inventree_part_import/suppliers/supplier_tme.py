@@ -1,5 +1,6 @@
 import hmac
 from base64 import b64encode
+from functools import cache
 from hashlib import sha1
 from types import MethodType
 
@@ -8,12 +9,35 @@ from requests.compat import quote, urlencode
 from requests.exceptions import HTTPError, JSONDecodeError, Timeout
 
 from ..error_helper import *
+from ..localization import get_country, get_language
 from ..retries import retry_timeouts
 from .base import ApiPart, Supplier
 
 class TME(Supplier):
     def setup(self, api_token, api_secret, currency, language, location):
         self.tme_api = TMEApi(api_token, api_secret, language, location, currency)
+
+        if not (country := get_country(location)):
+            return self.load_error(f"invalid country code '{location}'")
+
+        if not (lang := get_language(language)):
+            return self.load_error(f"invalid language code '{language}'")
+
+        tme_languages = self.tme_api.get_languages().json()["Data"]["LanguageList"]
+        if not lang["alpha_2"] in tme_languages:
+            return self.load_error(f"unsupported language '{language}'")
+
+        tme_countries = self.tme_api.get_countries().json()["Data"]["CountryList"]
+        tme_country_currencies = {c["CountryId"]: c["CurrencyList"] for c in tme_countries}
+
+        if not country["alpha_2"] in tme_country_currencies.keys():
+            return self.load_error(f"unsupported location '{location}'")
+
+        if currency not in tme_country_currencies[country["alpha_2"]]:
+            return self.load_error(
+                f"unsupported currency '{currency}' for location '{location}'"
+            )
+
         return True
 
     def search(self, search_term):
@@ -198,6 +222,14 @@ class TMEApi:
         if result:
             return result.json()["Data"]["ProductList"][0]["Files"]
         return []
+
+    @cache
+    def get_countries(self):
+        return self._api_call("Utils/GetCountries", {"Language": "EN"})
+
+    @cache
+    def get_languages(self):
+        return self._api_call("Utils/GetLanguages", {})
 
     HEADERS = {"Content-type": "application/x-www-form-urlencoded"}
 
