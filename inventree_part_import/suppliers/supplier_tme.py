@@ -53,7 +53,7 @@ class TME(Supplier):
             description=tme_part.get("Description", ""),
             image_url=fix_tme_url(tme_part.get("Photo")),
             datasheet_url=None,
-            supplier_link=fix_tme_url(tme_part.get("ProductInformationPage")),
+            supplier_link=quote(fix_tme_url(tme_part.get("ProductInformationPage"))),
             SKU=tme_part.get("Symbol", ""),
             manufacturer=tme_part.get("Producer", ""),
             manufacturer_link="",
@@ -85,7 +85,7 @@ class TME(Supplier):
         if product_files := self.tme_api.get_product_files(api_part.SKU):
             for document in product_files.get("DocumentList", []):
                 if document.get("DocumentType") == "DTE":
-                    api_part.datasheet_url = fix_tme_url(document.get("DocumentUrl"))
+                    api_part.datasheet_url = quote(fix_tme_url(document.get("DocumentUrl")))
                     break
 
         return True
