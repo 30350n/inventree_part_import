@@ -5,6 +5,7 @@ from digikey.v3.productinformation import KeywordSearchRequest, ProductDetailsRe
 from platformdirs import user_cache_path
 
 from .. import __package__ as parent_package
+from ..localization import get_country, get_language
 from ..retries import retry_timeouts
 from .base import ApiPart, Supplier
 
@@ -17,6 +18,12 @@ class DigiKey(Supplier):
         os.environ["DIGIKEY_CLIENT_SECRET"] = client_secret
         os.environ["DIGIKEY_CLIENT_SANDBOX"] = "False"
         os.environ["DIGIKEY_STORAGE_PATH"] = str(DIGIKEY_CACHE)
+
+        if not get_country(location):
+            return self.load_error(f"invalid country code '{location}'")
+
+        if not get_language(language):
+            return self.load_error(f"invalid language code '{language}'")
 
         self.currency = currency
         self.language = language

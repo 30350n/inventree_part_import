@@ -20,6 +20,9 @@ class Reichelt(Supplier):
         if location not in LOCATION_MAP:
             return self.load_error(f"unsupported location '{location}'")
 
+        if not get_language(language):
+            return self.load_error(f"invalid language code '{language}'")
+
         if not scraping:
             error(f"failed to load '{self.name}' module (scraping is disabled)")
             return False
