@@ -119,7 +119,7 @@ def inventree_part_import(
         return
 
     if configure:
-        _, available_suppliers = get_suppliers()
+        _, available_suppliers = get_suppliers(reload=True)
         supplier = available_suppliers[configure]
         with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
             supplier_config = config if (config := suppliers_config.get(configure)) else {}

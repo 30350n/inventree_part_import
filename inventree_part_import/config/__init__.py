@@ -272,7 +272,6 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
     if not setup:
         return {}
 
-    info(suppliers_config)
     info(f"failed to find {SUPPLIERS_CONFIG} config file", end="\n")
     new_configuration_hint()
 
