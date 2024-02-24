@@ -4,6 +4,7 @@ from functools import cache
 from inspect import _empty
 
 from ..config import get_pre_creation_hooks
+from ..error_helper import error
 
 @dataclass
 class ApiPart:
@@ -70,16 +71,20 @@ class Supplier:
             if name != "self"
         }
 
-    def search(self, search_term: str) -> (list[ApiPart], int):
+    def search(self, search_term: str) -> tuple[list[ApiPart], int]:
         raise NotImplementedError()
 
     @cache
-    def cached_search(self, search_term: str) -> (list[ApiPart], int):
+    def cached_search(self, search_term: str) -> tuple[list[ApiPart], int]:
         return self.search(search_term)
 
     @property
     def name(self):
         return self.__class__.__name__
+
+    def load_error(self, message):
+        error(f"failed to load '{self.name}' supplier module ({message})")
+        return False
 
 def money2float(money):
     money = MONEY2FLOAT_CLEANUP.sub("", money).strip()

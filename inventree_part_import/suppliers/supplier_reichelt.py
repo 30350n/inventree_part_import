@@ -7,6 +7,7 @@ from requests.compat import quote, urljoin
 
 from ..config import get_config
 from ..error_helper import *
+from ..localization import get_language
 from .base import ApiPart, Supplier, money2float
 from .scrape import scrape
 
@@ -17,8 +18,7 @@ SEARCH_URL = f"{BASE_URL}index.html?ACTION=446&q={{}}"
 class Reichelt(Supplier):
     def setup(self, language, location, scraping, max_results):
         if location not in LOCATION_MAP:
-            error(f"failed to load '{self.name}' module (unsupported location '{location}')")
-            return False
+            return self.load_error(f"unsupported location '{location}'")
 
         if not scraping:
             error(f"failed to load '{self.name}' module (scraping is disabled)")

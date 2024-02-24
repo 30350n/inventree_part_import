@@ -15,8 +15,7 @@ PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 class LCSC(Supplier):
     def setup(self, currency, ignore_duplicates=True):
         if currency not in CURRENCY_MAP.values():
-            error(f"failed to load '{self.name}' module (unsupported currency '{currency}')")
-            return False
+            return self.load_error(f"unsupported currency '{currency}'")
 
         self.currency = currency
         self.ignore_duplicates = ignore_duplicates
