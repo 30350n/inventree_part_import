@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 import yaml
 from cutie import prompt_yes_or_no, secure_input, select, select_multiple
-from isocodes import countries, currencies, languages
 from platformdirs import user_config_path
 from requests.exceptions import HTTPError, Timeout
 from yaml.error import MarkedYAMLError
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
 
 from .. import __package__ as parent_package
 from ..error_helper import *
+from ..localization import currencies, get_country, get_language
 from ..retries import RetryInvenTreeAPI
 
 PARENT_DIR = Path(__file__).parent
@@ -360,14 +360,14 @@ def input_currency(prompt="currency"):
 def input_language(prompt="language"):
     while True:
         language = prompt_input(prompt).lower()
-        if languages.get(alpha_2=language) or languages.get(alpha_3=language):
-            return language.upper()
+        if get_language(language):
+            return language
         error(f"'{language}' is not a valid ISO 639-2 language code")
 
 def input_location(prompt="location"):
     while True:
         location = prompt_input(prompt).upper()
-        if countries.get(alpha_2=location) or countries.get(alpha_3=location):
+        if get_country(location):
             return location
         error(f"'{location}' is not a valid ISO 3166 country code")
 
