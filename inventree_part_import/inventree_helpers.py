@@ -144,7 +144,7 @@ def upload_datasheet(part: Part, datasheet_url: str):
 
     file_name = url2filename(redirected_url)
     file_extension = file_name.split(".")[-1]
-    if file_extension != "pdf":
+    if file_extension.upper() not in {"PDF"}:
         warning(f"datasheet '{datasheet_url}' has invalid file extension '{file_extension}'")
         return
 
