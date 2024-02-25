@@ -109,7 +109,7 @@ class TME(Supplier):
         if product_files := self.tme_api.get_product_files(api_part.SKU):
             for document in product_files.get("DocumentList", []):
                 if document.get("DocumentType") == "DTE":
-                    api_part.datasheet_url = quote(fix_tme_url(document.get("DocumentUrl")))
+                    api_part.datasheet_url = fix_tme_url(document.get("DocumentUrl"))
                     break
 
         return True
