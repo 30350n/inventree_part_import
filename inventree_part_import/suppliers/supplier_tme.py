@@ -21,26 +21,21 @@ class TME(Supplier):
             c["CountryId"]: c for c in temp_api.get_countries().json()["Data"]["CountryList"]
         }
 
-        language = language.lower()
-        if language not in tme_languages:
-            if not (lang := get_language(language)):
-                return self.load_error(f"invalid language code '{language}'")
-            if not lang["alpha_2"] in tme_languages:
-                return self.load_error(f"unsupported language '{language}'")
-            language = lang["alpha_2"]
+        if not (lang := get_language(language)):
+            return self.load_error(f"invalid language code '{language}'")
+        if not lang["alpha_2"] in tme_languages:
+            return self.load_error(f"unsupported language '{language}'")
+        language = lang["alpha_2"]
 
-        location = location.upper()
-        if location not in tme_countries:
-            if not (country := get_country(location)):
-                return self.load_error(f"invalid country code '{location}'")
-            if not country["alpha_2"] in tme_countries:
-                return self.load_error(f"unsupported location '{location}'")
-            location = country["alpha_2"]
-
-        if currency not in tme_countries[location]["CurrencyList"]:
+        if not (country := get_country(location)):
+            return self.load_error(f"invalid country code '{location}'")
+        if not country["alpha_2"] in tme_countries:
+            return self.load_error(f"unsupported location '{location}'")
+        if currency not in tme_countries[country["alpha_2"]]["CurrencyList"]:
             return self.load_error(
                 f"unsupported currency '{currency}' for location '{location}'"
             )
+        location = country["alpha_2"]
 
         self.tme_api = TMEApi(api_token, api_secret, language, location, currency)
 
@@ -122,7 +117,12 @@ class TME(Supplier):
 
 def fix_tme_url(url):
     if url and url.startswith("//"):
-        return f"https:{url}"
+        url = f"https:{url}"
+
+    # fix supplier part url if language is set to czech (#15)
+    if url and "tme.eu/cs/" in url:
+        url = url.replace("tme.eu/cs/", "tme.eu/cz/", 1)
+
     return url
 
 class TMEApi:
