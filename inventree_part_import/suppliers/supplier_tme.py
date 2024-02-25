@@ -15,28 +15,34 @@ from .base import ApiPart, Supplier
 
 class TME(Supplier):
     def setup(self, api_token, api_secret, currency, language, location):
-        self.tme_api = TMEApi(api_token, api_secret, language, location, currency)
+        temp_api = TMEApi(api_token, api_secret)
+        tme_languages = temp_api.get_languages().json()["Data"]["LanguageList"]
+        tme_countries = {
+            c["CountryId"]: c for c in temp_api.get_countries().json()["Data"]["CountryList"]
+        }
 
-        if not (country := get_country(location)):
-            return self.load_error(f"invalid country code '{location}'")
+        language = language.lower()
+        if language not in tme_languages:
+            if not (lang := get_language(language)):
+                return self.load_error(f"invalid language code '{language}'")
+            if not lang["alpha_2"] in tme_languages:
+                return self.load_error(f"unsupported language '{language}'")
+            language = lang["alpha_2"]
 
-        if not (lang := get_language(language)):
-            return self.load_error(f"invalid language code '{language}'")
+        location = location.upper()
+        if location not in tme_countries:
+            if not (country := get_country(location)):
+                return self.load_error(f"invalid country code '{location}'")
+            if not country["alpha_2"] in tme_countries:
+                return self.load_error(f"unsupported location '{location}'")
+            location = country["alpha_2"]
 
-        tme_languages = self.tme_api.get_languages().json()["Data"]["LanguageList"]
-        if not lang["alpha_2"] in tme_languages:
-            return self.load_error(f"unsupported language '{language}'")
-
-        tme_countries = self.tme_api.get_countries().json()["Data"]["CountryList"]
-        tme_country_currencies = {c["CountryId"]: c["CurrencyList"] for c in tme_countries}
-
-        if not country["alpha_2"] in tme_country_currencies.keys():
-            return self.load_error(f"unsupported location '{location}'")
-
-        if currency not in tme_country_currencies[country["alpha_2"]]:
+        if currency not in tme_countries[location]["CurrencyList"]:
             return self.load_error(
                 f"unsupported currency '{currency}' for location '{location}'"
             )
+
+        self.tme_api = TMEApi(api_token, api_secret, language, location, currency)
 
         return True
 
