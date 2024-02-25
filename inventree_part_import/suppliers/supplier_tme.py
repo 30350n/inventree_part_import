@@ -77,7 +77,7 @@ class TME(Supplier):
             description=tme_part.get("Description", ""),
             image_url=fix_tme_url(tme_part.get("Photo")),
             datasheet_url=None,
-            supplier_link=quote(fix_tme_url(tme_part.get("ProductInformationPage"))),
+            supplier_link=quote(fix_tme_url(tme_part.get("ProductInformationPage")), safe=":/"),
             SKU=tme_part.get("Symbol", ""),
             manufacturer=tme_part.get("Producer", ""),
             manufacturer_link="",
