@@ -171,7 +171,13 @@ class Category:
                     category_config = category_config[sub_category_name]
 
                 if aliases := category_config.get("_aliases"):
-                    aliases.append(alias)
+                    if alias not in aliases:
+                        aliases.append(alias)
+                    else:
+                        warning(
+                            f"failed to add alias '{alias}' for category '{self.name}' "
+                            f"(alias is already defined)"
+                        )
                 else:
                     category_config["_aliases"] = [alias]
 
@@ -232,7 +238,13 @@ class Parameter:
                 parameter_config = parameters_config[self.name] = {}
 
             if aliases := parameter_config.get("_aliases"):
-                aliases.append(alias)
+                if alias not in aliases:
+                    aliases.append(alias)
+                else:
+                    warning(
+                        f"failed to add alias '{alias}' for parameter '{self.name}' "
+                        f"(alias is already defined)"
+                    )
             else:
                 parameter_config["_aliases"] = [alias]
 
