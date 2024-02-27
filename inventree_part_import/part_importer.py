@@ -232,7 +232,9 @@ class PartImporter:
                 prompt(f"failed to match category for '{path_str}', select category")
                 if not (category := self.select_category(api_part.category_path)):
                     return ImportResult.FAILURE
+
                 category.add_alias(api_part.category_path[-1])
+                self.category_map[api_part.category_path[-1]] = category
 
             info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
             part = Part.create(self.api, {"category": category.part_category.pk, **part_data})
