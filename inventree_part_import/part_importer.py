@@ -221,7 +221,7 @@ class PartImporter:
             update_object_data(part, part_data, f"part {api_part.MPN}")
         else:
             for subcategory in reversed(api_part.category_path):
-                if category := self.category_map.get(subcategory):
+                if category := self.category_map.get(subcategory.lower()):
                     break
             else:
                 path_str = f" {BOLD}/{BOLD_END} ".join(api_part.category_path)
@@ -234,7 +234,7 @@ class PartImporter:
                     return ImportResult.FAILURE
 
                 category.add_alias(api_part.category_path[-1])
-                self.category_map[api_part.category_path[-1]] = category
+                self.category_map[api_part.category_path[-1].lower()] = category
 
             info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
             part = Part.create(self.api, {"category": category.part_category.pk, **part_data})
@@ -274,7 +274,7 @@ class PartImporter:
                 return category_matches[index]
 
             name = prompt_input("category name")
-            if (category := self.category_map.get(name)) and category.name == name:
+            if (category := self.category_map.get(name.lower())) and category.name == name:
                 return category
             warning(f"category '{name}' does not exist")
             prompt("select category")
@@ -322,7 +322,7 @@ class PartImporter:
 
         matched_parameters = {}
         for api_part_parameter, value in api_part.parameters.items():
-            for parameter in self.parameter_map.get(api_part_parameter, []):
+            for parameter in self.parameter_map.get(api_part_parameter.lower(), []):
                 name = parameter.name
                 if name in category.parameters and name not in matched_parameters:
                     matched_parameters[name] = value
@@ -344,17 +344,18 @@ class PartImporter:
 
                 if not alias:
                     continue
-                if not (params := self.parameter_map.get(parameter_name)) or len(params) != 1:
+
+                params = self.parameter_map.get(parameter_name.lower())
+                if not params or len(params) != 1:
                     warning(f"failed to add alias '{alias}' for parameter '{parameter_name}'")
                     continue
-
                 parameter = params[0]
-                parameter.add_alias(alias)
 
-                if existing := self.parameter_map.get(alias):
+                parameter.add_alias(alias)
+                if existing := self.parameter_map.get(alias.lower()):
                     existing.append(parameter)
                 else:
-                    self.parameter_map[alias] = [parameter]
+                    self.parameter_map[alias.lower()] = [parameter]
 
         thread_pool = ThreadPool(4)
         async_results = []

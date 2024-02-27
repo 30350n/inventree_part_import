@@ -126,21 +126,22 @@ def setup_categories_and_parameters(inventree_api):
         if category.structural or category.ignore:
             continue
         for alias in category.aliases:
-            category_map[alias] = category
-        if category.name not in ignore:
-            if category.name not in category_map:
-                category_map[category.name] = category
+            category_map[alias.lower()] = category
+        category_slug = category.name.lower()
+        if category_slug not in ignore:
+            if category_slug not in category_map:
+                category_map[category_slug] = category
             else:
-                ignore.add(category.name)
-                category_map.pop(category.name)
+                ignore.add(category_slug)
+                category_map.pop(category_slug)
 
     parameter_map = {}
     for parameter in parameters.values():
         for alias in (*parameter.aliases, parameter.name):
-            if existing := parameter_map.get(alias):
+            if existing := parameter_map.get(alias.lower()):
                 existing.append(parameter)
             else:
-                parameter_map[alias] = [parameter]
+                parameter_map[alias.lower()] = [parameter]
 
     success("setup categories!", end="\n\n")
 
