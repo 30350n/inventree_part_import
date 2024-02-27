@@ -335,7 +335,9 @@ class PartImporter:
         if unassigned_parameters and self.interactive:
             prompt(f"failed to match some parameters from '{api_part.supplier_link}'", end="\n")
             for parameter_name in unassigned_parameters.copy():
-                prompt(f"failed to match value for parameter '{parameter_name}', select value")
+                prompt(
+                    f"failed to match value for parameter '{parameter_name}', select parameter"
+                )
                 alias, value = self.select_parameter(parameter_name, api_part.parameters)
                 if value is None:
                     continue
@@ -411,17 +413,24 @@ class PartImporter:
 
         choices = (
             *(f"{value} | {BOLD}{name}{BOLD_END}" for value, name in zip(values, names)),
+            f"{BOLD}Match Parameter Manually ...{BOLD_END}",
             f"{BOLD}Enter Value Manually ...{BOLD_END}",
             f"{BOLD}Skip ...{BOLD_END}"
         )
-        index = select(choices, deselected_prefix="  ", selected_prefix="> ")
-        if index == N_MATCHES + 1:
-            return None, None
-        elif index < N_MATCHES:
-            return parameter_matches_items[index]
+        while True:
+            index = select(choices, deselected_prefix="  ", selected_prefix="> ")
+            if index == N_MATCHES + 1:
+                return None, prompt_input("value")
+            if index == N_MATCHES + 2:
+                return None, None
+            elif index < N_MATCHES:
+                return parameter_matches_items[index]
 
-        value = prompt_input("value")
-        return None, value
+            name = prompt_input("parameter name")
+            if (parameter_value := parameters.get(name)):
+                return (name, parameter_value)
+            warning(f"parameter '{name}' is not defined by the supplier")
+            prompt("select parameter")
 
 def create_parameter(inventree_api, part, parameter_template, value):
     try:
