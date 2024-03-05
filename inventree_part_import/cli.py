@@ -57,6 +57,11 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
 @click.option("-d", "--dry", is_flag=True, help="Run without modifying InvenTree database.")
 @click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
+@click.option("--overwrite-part-name", help=(
+    "Override name of the part related to the search results. "
+    "If multiple search terms are given, all resulting manufacturer/supplier parts "
+    "will point to the same part."
+))
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
 @click.option("--update", metavar="CATEGORY", help="Update all parts from InvenTree CATEGORY.")
@@ -74,6 +79,7 @@ def inventree_part_import(
     dry=False,
     config_dir=False,
     verbose=False,
+    overwrite_part_name=None,
     show_config_dir=False,
     configure=None,
     update=None,
@@ -203,9 +209,9 @@ def inventree_part_import(
     try:
         for index, part in enumerate(parts):
             last_import_result = (
-                importer.import_part(part.name, part, supplier, only_supplier)
+                importer.import_part(part.name, part, supplier, only_supplier, overwrite_part_name)
                 if isinstance(part, Part) else
-                importer.import_part(part, None, supplier, only_supplier)
+                importer.import_part(part, None, supplier, only_supplier, overwrite_part_name)
             )
             print()
             match last_import_result:
@@ -227,9 +233,9 @@ def inventree_part_import(
             importer.interactive = True
             for part in parts2:
                 import_result = (
-                    importer.import_part(part.name, part, supplier, only_supplier)
+                    importer.import_part(part.name, part, supplier, only_supplier, overwrite_part_name)
                     if isinstance(part, Part) else
-                    importer.import_part(part, None, supplier, only_supplier)
+                    importer.import_part(part, None, supplier, only_supplier, overwrite_part_name)
                 )
                 match import_result:
                     case ImportResult.ERROR | ImportResult.FAILURE:

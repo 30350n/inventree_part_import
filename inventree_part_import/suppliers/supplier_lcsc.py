@@ -113,6 +113,7 @@ class LCSC(Supplier):
             currency = self.currency
 
         return ApiPart(
+            name=lcsc_part.get("productModel", ""),
             description=REMOVE_HTML_TAGS.sub("", description),
             image_url=image_url,
             datasheet_url=lcsc_part.get("pdfUrl"),
