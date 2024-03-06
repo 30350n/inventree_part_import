@@ -119,7 +119,7 @@ Electronics:
                 - Tolerance
                 - Rated Power
         Relays:
-            _aliases:
+            _parameters:
                 - Mounting Type
                 - Rated Current
                 - Rated Voltage
