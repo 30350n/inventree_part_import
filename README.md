@@ -91,6 +91,9 @@ The following parameters have to be set:
 - `scrape`: whether or not web page scraping is allowed (this can get you temporarily blocked)
 - `max_results`: the maximum number of results to display in interactive mode
   (set to null to disable)
+- `part_selection_format`: standard python format str used to format each line of the
+  interactive part selection menu (any fields from the `ApiPart` dataclass can be used,
+  defaults to: `"{MPN} | {manufacturer} | {SKU} | {supplier_link}"`)
 
 ### `suppliers.yaml`
 

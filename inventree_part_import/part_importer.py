@@ -1,6 +1,7 @@
 import json, re, traceback
 from enum import Enum
 from multiprocessing.pool import ThreadPool
+from string import Formatter
 
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
@@ -112,21 +113,27 @@ class PartImporter:
 
     @staticmethod
     def select_api_part(api_parts: list[ApiPart]):
-        mpns = [api_part.MPN for api_part in api_parts]
-        max_mpn_length = max(len(mpn) for mpn in mpns)
-        mpns = [mpn.ljust(max_mpn_length) for mpn in mpns]
+        format_str = str(get_config().get(
+            "part_selection_format", "{MPN} | {manufacturer} | {SKU} | {supplier_link}"
+        ))
+        fields = [
+            parsed[1] for parsed in Formatter().parse(format_str)
+            if parsed[1] in ApiPart.__dataclass_fields__
+        ]
 
-        manufacturers = [str(api_part.manufacturer) for api_part in api_parts]
-        max_manufacturer_length = max(len(man) for man in manufacturers)
-        manufacturers = [man.ljust(max_manufacturer_length) for man in manufacturers]
+        api_part_values = [
+            [str(getattr(api_part, field)) for api_part in api_parts] for field in fields
+        ]
+        max_lengths = [max(len(value) for value in values) for values in api_part_values]
+        api_part_format_kwargs = [
+            {
+                field: value.ljust(max_length)
+                for field, value, max_length in zip(fields, values, max_lengths)
+            }
+            for values in zip(*api_part_values)
+        ]
 
-        skus = [api_part.SKU for api_part in api_parts]
-        max_sku_length = max(len(sku) for sku in skus)
-        skus = [sku.ljust(max_sku_length) for sku in skus]
-
-        links = [f"({api_part.supplier_link})" for api_part in api_parts]
-
-        choices = [*map(" ".join, zip(map(" | ".join, zip(mpns, manufacturers, skus)), links))]
+        choices = [format_str.format(**kwargs) for kwargs in api_part_format_kwargs]
         choices.append(f"{BOLD}Skip ...{BOLD_END}")
 
         index = select(choices, deselected_prefix="  ", selected_prefix="> ")
