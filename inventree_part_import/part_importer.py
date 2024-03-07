@@ -1,7 +1,7 @@
 import json, re, traceback
 from enum import Enum
 from multiprocessing.pool import ThreadPool
-from string import Formatter
+from string import Formatter, _string
 
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
@@ -118,22 +118,25 @@ class PartImporter:
         ))
         fields = [
             parsed[1] for parsed in Formatter().parse(format_str)
-            if parsed[1] in ApiPart.__dataclass_fields__
+            if GET_FORMATSTR_FIELD.sub("", parsed[1]) in ApiPart.__dataclass_fields__
         ]
 
+        formatter = SafeFormatter()
         api_part_values = [
-            [str(getattr(api_part, field)) for api_part in api_parts] for field in fields
+            [formatter.format(f"{{{field}}}", **api_part.__dict__) for api_part in api_parts]
+            for field in fields
         ]
         max_lengths = [max(len(value) for value in values) for values in api_part_values]
         api_part_format_kwargs = [
             {
-                field: value.ljust(max_length)
+                GET_FORMATSTR_FIELD.sub("", field): value.ljust(max_length)
                 for field, value, max_length in zip(fields, values, max_lengths)
             }
             for values in zip(*api_part_values)
         ]
 
-        choices = [format_str.format(**kwargs) for kwargs in api_part_format_kwargs]
+        format_str = SIMPLIFY_FORMATSTR.sub(SIMPLIFY_FORMATSTR_SUB, format_str)
+        choices = [formatter.format(format_str, **kwargs) for kwargs in api_part_format_kwargs]
         choices.append(f"{BOLD}Skip ...{BOLD_END}")
 
         index = select(choices, deselected_prefix="  ", selected_prefix="> ")
@@ -466,3 +469,15 @@ def sanitize_parameter_value(value: str) -> str:
     value = SANITIZE_PARAMETER.sub("", value)
     value = value.replace("Ohm", "ohm").replace("ohms", "ohm")
     return value
+
+class SafeFormatter(Formatter):
+    def get_field(self, field_name, args, kwargs):
+        first, _ = _string.formatter_field_name_split(field_name)
+        try:
+            return super().get_field(field_name, args, kwargs)
+        except (KeyError, TypeError):
+            return "", first
+
+GET_FORMATSTR_FIELD = re.compile(r"[\[.].*$")
+SIMPLIFY_FORMATSTR = re.compile(r"([^{]{[^[.}]*)[^}]*(})")
+SIMPLIFY_FORMATSTR_SUB = "\\g<1>\\g<2>"
