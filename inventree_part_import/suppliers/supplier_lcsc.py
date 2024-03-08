@@ -139,6 +139,17 @@ def cleanup_url_id(url):
     return url
 
 CURRENCY_MAP = {
-    "€": "EUR",
     "US$": "USD",
+    "A$":  "AUD",
+    "C$":  "CAD",
+    "€":   "EUR",
+    "£":   "GBP",
+    "HK$": "HKD",
+    "JP¥": "JPY",
+    "RM":  "MYR",
+    "S$":  "SGD",
+    "₽":   "RUB",
+    "kr":  "SEK",
+    "kr.": "DKK",
+    "₹":   "INR",
 }
