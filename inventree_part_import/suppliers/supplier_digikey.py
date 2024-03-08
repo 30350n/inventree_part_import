@@ -1,7 +1,7 @@
 import logging, os
 
 import digikey
-from digikey.v3.productinformation import KeywordSearchRequest, ProductDetailsResponse
+from digikey.v3.productinformation import KeywordSearchRequest, KeywordSearchResponse
 from platformdirs import user_cache_path
 
 from .. import __package__ as parent_package
@@ -72,16 +72,9 @@ class DigiKey(Supplier):
         product_count = max(product_count, len(filtered_results))
         return list(map(self.get_api_part, filtered_results)), product_count
 
-    def get_api_part(self, digikey_part):
+    def get_api_part(self, digikey_part: KeywordSearchResponse):
         quantity_available = (
             digikey_part.quantity_available + digikey_part.manufacturer_public_quantity)
-
-        manufacturer_link = ""
-        if isinstance(digikey_part, ProductDetailsResponse):
-            for media in digikey_part.media_links:
-                if media.media_type == "Manufacturer Product Page":
-                    manufacturer_link = media.url
-                    break
 
         category_path = [digikey_part.category.value, *digikey_part.family.value.split(" - ")]
 
@@ -102,7 +95,7 @@ class DigiKey(Supplier):
             supplier_link=digikey_part.product_url,
             SKU=digikey_part.digi_key_part_number,
             manufacturer=digikey_part.manufacturer.value,
-            manufacturer_link=manufacturer_link,
+            manufacturer_link="",
             MPN=digikey_part.manufacturer_part_number,
             quantity_available=quantity_available,
             packaging=digikey_part.packaging.value,
