@@ -1,7 +1,9 @@
 import hmac
 from base64 import b64encode
-from functools import cache
+from functools import cache, wraps
 from hashlib import sha1
+from time import sleep
+from timeit import default_timer
 from types import MethodType
 
 import requests
@@ -125,6 +127,19 @@ def fix_tme_url(url):
 
     return url
 
+def limit_frequency(seconds):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            now = default_timer()
+            if (timeout := seconds - (now - wrapper.last_call)) > 0:
+                sleep(timeout)
+            wrapper.last_call = now
+            return func(*args, **kwargs)
+        wrapper.last_call = default_timer() - seconds
+        return wrapper
+    return decorator
+
 class TMEApi:
     BASE_URL = "https://api.tme.eu/"
 
@@ -176,6 +191,7 @@ class TMEApi:
             return result.json()["Data"]
         return []
 
+    @limit_frequency(2.5)
     def get_prices_and_stocks(self, product_symbols):
         if not product_symbols:
             return []
