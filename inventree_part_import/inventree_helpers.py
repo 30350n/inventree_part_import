@@ -61,8 +61,8 @@ def get_category_parts(part_category: PartCategory, cascade):
         purchaseable=True,
     )
 
-FILTER_SPECIAL_CHARS_REGEX = re.compile(r"([^\\])([\[\].^$*+?{}|()])")
-FILTER_SPECIAL_CHARS_SUB = r"\g<1>\\\g<2>"
+FILTER_SPECIAL_CHARS_REGEX = re.compile(r"(?<!\\)([\[\].^$*+?{}|()])")
+FILTER_SPECIAL_CHARS_SUB = r"\\\g<1>"
 
 def update_object_data(obj: InventreeObject, data: dict, info_label=""):
     for name, value in data.items():
