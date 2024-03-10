@@ -191,7 +191,7 @@ class TMEApi:
             return result.json()["Data"]
         return []
 
-    @limit_frequency(2.5)
+    @limit_frequency(0.6)
     def get_prices_and_stocks(self, product_symbols):
         if not product_symbols:
             return []
