@@ -91,7 +91,10 @@ def create_manufacturer(inventree_api: InvenTreeAPI, name):
         if name.lower() == manufacturer.name.lower()
     ]
     if len(manufacturers) == 1:
-        return manufacturers[0]
+        manufacturer = manufacturers[0]
+        if not manufacturer.is_manufacturer:
+            manufacturer.save({"is_manufacturer": True})
+        return manufacturer
     assert len(manufacturers) == 0
 
     info(f"creating manufacturer '{name}' ...")
