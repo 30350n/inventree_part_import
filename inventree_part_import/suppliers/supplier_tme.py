@@ -84,7 +84,7 @@ class TME(Supplier):
             SKU=tme_part.get("Symbol", ""),
             manufacturer=tme_part.get("Producer", ""),
             manufacturer_link="",
-            MPN=tme_part.get("OriginalSymbol", ""),
+            MPN=tme_part.get("OriginalSymbol", "") or tme_part.get("Symbol", ""),
             quantity_available=tme_stock.get("Amount", 0),
             packaging="",
             category_path=self.tme_api.get_category_path(tme_part["CategoryId"]),
