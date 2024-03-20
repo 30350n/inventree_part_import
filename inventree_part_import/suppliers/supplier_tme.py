@@ -82,7 +82,7 @@ class TME(Supplier):
             datasheet_url=None,
             supplier_link=quote(fix_tme_url(tme_part.get("ProductInformationPage")), safe=":/"),
             SKU=tme_part.get("Symbol", ""),
-            manufacturer=tme_part.get("Producer", ""),
+            manufacturer=tme_part.get("Producer", "") or "TME",
             manufacturer_link="",
             MPN=tme_part.get("OriginalSymbol", "") or tme_part.get("Symbol", ""),
             quantity_available=tme_stock.get("Amount", 0),
