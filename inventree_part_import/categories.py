@@ -65,16 +65,14 @@ def setup_categories_and_parameters(inventree_api):
 
         category.part_category = part_category
 
-    for part_category in part_categories.values():
-        path_str = part_category.pathstring
-        category_path = tuple(path_str.split("/"))
+    for category_path, part_category in part_categories.items():
         if category_path in categories:
             continue
-
         for i in range(1, len(category_path)):
             if (parent := categories.get(category_path[:-i])) and parent.ignore:
                 break
         else:
+            path_str = part_category.pathstring
             warning(f"category '{path_str}' on host is not defined in {CATEGORIES_CONFIG}")
 
     parameter_templates = {
