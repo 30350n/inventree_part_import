@@ -77,6 +77,7 @@ class TME(Supplier):
         }
 
         api_part = ApiPart(
+            name=tme_part.get("OriginalSymbol", ""),
             description=tme_part.get("Description", ""),
             image_url=fix_tme_url(tme_part.get("Photo")),
             datasheet_url=None,

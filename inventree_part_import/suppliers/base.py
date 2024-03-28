@@ -8,6 +8,7 @@ from ..error_helper import error
 
 @dataclass
 class ApiPart:
+    name: str
     description: str
     image_url: str
     datasheet_url: str
@@ -35,7 +36,7 @@ class ApiPart:
 
     def get_part_data(self):
         return {
-            "name": self.MPN,
+            "name": self.name,
             "description": self.description,
             "link": self.manufacturer_link[:200],
             "active": True,
