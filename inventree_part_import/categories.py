@@ -98,28 +98,31 @@ def setup_categories_and_parameters(inventree_api):
             })
 
     category_parameters = {
-        (tuple(category.path), param)
-        for category in categories.values() for param in category.parameters
+        (category, param) for category in categories.values() for param in category.parameters
+    }
+    part_category_pk_to_category = {
+        category.part_category.pk: category for category in categories.values()
     }
     part_category_parameter_templates = {
-        (tuple(p.category_detail["pathstring"].split("/")), p.parameter_template_detail["name"])
-        for p in PartCategoryParameterTemplate.list(inventree_api)
+        (category, template.parameter_template_detail["name"])
+        for template in PartCategoryParameterTemplate.list(inventree_api)
+        if (category := part_category_pk_to_category.get(template.category))
     }
 
     for category_parameter in category_parameters:
         if category_parameter not in part_category_parameter_templates:
-            category_path, parameter = category_parameter
-            category_str = "/".join(category_path)
+            category, parameter = category_parameter
+            category_str = "/".join(category.path)
             info(f"creating parameter template '{parameter}' for '{category_str}' ...")
             PartCategoryParameterTemplate.create(inventree_api, {
-                "category": part_categories[category_path].pk,
+                "category": category.part_category.pk,
                 "parameter_template": parameter_templates[parameter].pk,
             })
 
-    for part_category_path, template_name in part_category_parameter_templates:
-        if (part_category_path, template_name) not in category_parameters:
+    for category, template_name in part_category_parameter_templates:
+        if (category, template_name) not in category_parameters and not category.ignore:
             warning(
-                f"parameter template '{template_name}' for '{'/'.join(part_category_path)}' "
+                f"parameter template '{template_name}' for '{'/'.join(category.path)}' "
                 f"on host is not defined in {CATEGORIES_CONFIG}"
             )
 
