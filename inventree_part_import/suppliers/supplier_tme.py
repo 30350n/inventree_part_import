@@ -14,6 +14,7 @@ from ..error_helper import *
 from ..localization import get_country, get_language
 from ..retries import retry_timeouts
 from .base import ApiPart, Supplier
+from .scrape import REMOVE_HTML_TAGS
 
 class TME(Supplier):
     def setup(self, api_token, api_secret, currency, language, location):
@@ -104,7 +105,7 @@ class TME(Supplier):
         api_part.parameters = {}
         for parameter in parameters:
             name = parameter["ParameterName"]
-            value = parameter["ParameterValue"]
+            value = REMOVE_HTML_TAGS.sub("", parameter["ParameterValue"])
             if existing_value := api_part.parameters.get(name):
                 value = ", ".join((existing_value, value))
             api_part.parameters[name] = value
