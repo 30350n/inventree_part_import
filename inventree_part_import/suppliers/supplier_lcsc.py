@@ -22,16 +22,23 @@ class LCSC(Supplier):
         return True
 
     def search(self, search_term):
-        setup = self.setup_hook
-        if not (search_result := scrape(SEARCH_URL.format(search_term), setup_hook=setup)):
+        for _ in range(3):
+            search_result = scrape(SEARCH_URL.format(search_term), setup_hook=self.setup_hook)
+            if search_result and (result := search_result.json().get("result")):
+                break
+        else:
+            warning("failed to search part at LCSC (internal API error)")
             return [], 0
 
-        result = search_result.json()
-        if product_detail := result["result"]["tipProductDetailUrlVO"]:
+        if product_detail := result["tipProductDetailUrlVO"]:
             url = PRODUCT_INFO_URL.format(product_detail["productCode"])
-            if detail_request := scrape(url, setup_hook=setup):
-                return [self.get_api_part(detail_request.json()["result"])], 1
-        elif products := result["result"]["productSearchResultVO"]:
+            for _ in range(3):
+                detail_request = scrape(url, setup_hook=self.setup_hook)
+                if detail_request and (detail_result := detail_request.json.get("result")):
+                    return [self.get_api_part(detail_result)], 1
+                print("retry")
+            warning("failed to retrieve product data from LCSC (internal API error)")
+        elif products := result["productSearchResultVO"]:
             filtered_matches = [
                 product for product in products["productList"]
                 if product["productModel"].lower().startswith(search_term.lower())
