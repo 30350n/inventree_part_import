@@ -145,7 +145,7 @@ class PartImporter:
     def import_supplier_part(self, supplier: Company, api_part: ApiPart, part: Part = None):
         import_result = ImportResult.SUCCESS
 
-        if supplier_part := get_supplier_part(self.api, api_part.SKU):
+        if supplier_part := get_supplier_part(self.api, supplier, api_part.SKU):
             info(f"found existing {supplier.name} part {supplier_part.SKU} ...")
         else:
             info(f"importing {supplier.name} part {api_part.SKU} ...")
