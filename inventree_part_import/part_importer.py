@@ -29,11 +29,12 @@ class ImportResult(Enum):
         return self if self.value < other.value else other
 
 class PartImporter:
-    def __init__(self, inventree_api, interactive=False, verbose=False):
+    def __init__(self, inventree_api, interactive=False, verbose=False, ipn=False):
         self.api = inventree_api
         self.interactive = interactive
         self.verbose = verbose
         self.dry_run = hasattr(inventree_api, "DRY_RUN")
+        self.ipn = ipn
 
         # preload pre_creation_hooks
         get_pre_creation_hooks()
@@ -246,8 +247,8 @@ class PartImporter:
                 category.add_alias(api_part.category_path[-1])
                 self.category_map[api_part.category_path[-1].lower()] = category
 
-            info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
-            part = Part.create(self.api, {"category": category.part_category.pk, **part_data})
+            info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")            
+            part = Part.create(self.api, {"category": category.part_category.pk, **({"IPN": api_part.SKU} if self.api else {}),**part_data})
 
         manufacturer = create_manufacturer(self.api, api_part.manufacturer)
         info(f"creating manufacturer part {api_part.MPN} ...")
@@ -458,7 +459,7 @@ def update_parameter(parameter, value):
         parameter.save({"data": value})
     except HTTPError as e:
         msg = e.args[0]["body"]
-        return f"failed to update parameter '{parameter.name}' to '{value}' with '{msg}'"
+        return f"failed to update parameter '{getattr(parameter, 'name', '(unknown)')}' to '{value}' with '{msg}'"
 
 SANITIZE_PARAMETER = re.compile("±")
 

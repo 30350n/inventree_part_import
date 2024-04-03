@@ -57,6 +57,7 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
 @click.option("-d", "--dry", is_flag=True, help="Run without modifying InvenTree database.")
 @click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
+@click.option("--ipn", is_flag=True, help="If a new part is being created, set the IPN to the search part number.")
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
 @click.option("--update", metavar="CATEGORY", help="Update all parts from InvenTree CATEGORY.")
@@ -72,6 +73,7 @@ def inventree_part_import(
     only=None,
     interactive="false",
     dry=False,
+    ipn=False,
     config_dir=False,
     verbose=False,
     show_config_dir=False,
@@ -147,6 +149,9 @@ def inventree_part_import(
 
     if not verbose:
         error_helper.INFO_END = "\r"
+        
+    if ipn:
+        hint("--ipn will set new parts IPN to the search part number.")
 
     if dry:
         warning(DRY_MODE_WARNING, prefix="")
@@ -191,7 +196,7 @@ def inventree_part_import(
     # make sure suppliers.yaml exists
     get_suppliers(reload=True)
     setup_supplier_companies(inventree_api)
-    importer = PartImporter(inventree_api, interactive=interactive == "true", verbose=verbose)
+    importer = PartImporter(inventree_api, interactive=interactive == "true", verbose=verbose, ipn=ipn)
 
     if update or update_recursive:
         info(f"updating {len(parts)} parts from '{category_path}'", end="\n")
