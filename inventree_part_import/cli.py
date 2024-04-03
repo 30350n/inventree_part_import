@@ -57,7 +57,7 @@ InteractiveChoices = click.Choice(("default", "false", "true", "twice"), case_se
 @click.option("-d", "--dry", is_flag=True, help="Run without modifying InvenTree database.")
 @click.option("-c", "--config-dir", help="Override path to config directory.")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output for debugging.")
-@click.option("--ipn", is_flag=True, help="If a new part is being created, set the IPN to the search part number.")
+@click.option("--ipn", is_flag=True, help="When import creates a new part, sets the IPN to the search part number.")
 @click.option("--show-config-dir", is_flag=True, help="Show path to config directory and exit.")
 @click.option("--configure", type=AvailableSuppliersChoices, help="Configure supplier.")
 @click.option("--update", metavar="CATEGORY", help="Update all parts from InvenTree CATEGORY.")
