@@ -34,7 +34,7 @@ class LCSC(Supplier):
             url = PRODUCT_INFO_URL.format(product_detail["productCode"])
             for _ in range(3):
                 detail_request = scrape(url, setup_hook=self.setup_hook)
-                if detail_request and (detail_result := detail_request.json.get("result")):
+                if detail_request and (detail_result := detail_request.json().get("result")):
                     return [self.get_api_part(detail_result)], 1
                 print("retry")
             warning("failed to retrieve product data from LCSC (internal API error)")
