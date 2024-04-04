@@ -113,6 +113,7 @@ VALID_CONFIG_VARS = {
     "location",
     "scraping",
     "datasheets",
+    "part_selection_format",
     *DEFAULT_CONFIG_VARS,
 }
 RENAMED_CONFIG_VARS = {
