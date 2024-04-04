@@ -459,7 +459,7 @@ def update_parameter(parameter, value):
         parameter.save({"data": value})
     except HTTPError as e:
         msg = e.args[0]["body"]
-        return f"failed to update parameter '{getattr(parameter, 'name', '(unknown)')}' to '{value}' with '{msg}'"
+        return f"failed to update parameter '{parameter.name}' to '{value}' with '{msg}'"
 
 SANITIZE_PARAMETER = re.compile("±")
 
