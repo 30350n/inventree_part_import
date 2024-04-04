@@ -270,7 +270,8 @@ class PartImporter:
             )
         category_matches = sorted(self.categories, key=rate_category, reverse=True)
 
-        N_MATCHES = min(5, len(category_matches))
+        max_matches = int(get_config().get("interactive_category_matches", 5))
+        N_MATCHES = min(max_matches, len(category_matches))
         choices = (
             *(" / ".join(category.path) for category in category_matches[:N_MATCHES]),
             f"{BOLD}Enter Manually ...{BOLD_END}",
@@ -409,7 +410,8 @@ class PartImporter:
 
     @staticmethod
     def select_parameter(parameter_name, parameters) -> tuple[str, str]:
-        N_MATCHES = min(5, len(parameters))
+        max_matches = int(get_config().get("interactive_parameter_matches", 5))
+        N_MATCHES = min(max_matches, len(parameters))
         parameter_matches_items = sorted(
             parameters.items(),
             key=lambda item: max(fuzz.partial_ratio(parameter_name, term) for term in item),

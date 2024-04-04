@@ -114,6 +114,8 @@ VALID_CONFIG_VARS = {
     "scraping",
     "datasheets",
     "part_selection_format",
+    "interactive_category_matches",
+    "interactive_parameter_matches",
     *DEFAULT_CONFIG_VARS,
 }
 RENAMED_CONFIG_VARS = {
