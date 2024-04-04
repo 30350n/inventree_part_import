@@ -247,7 +247,7 @@ class PartImporter:
                 category.add_alias(api_part.category_path[-1])
                 self.category_map[api_part.category_path[-1].lower()] = category
 
-            info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")            
+            info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
             part = Part.create(self.api, {"category": category.part_category.pk, **({"IPN": api_part.SKU} if self.api else {}),**part_data})
 
         manufacturer = create_manufacturer(self.api, api_part.manufacturer)
