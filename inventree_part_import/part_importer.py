@@ -378,7 +378,7 @@ class PartImporter:
             if existing_parameter := existing_parameters.get(name):
                 if update_existing and existing_parameter.data != value:
                     async_results.append(thread_pool.apply_async(
-                        update_parameter, (existing_parameter, name, value)
+                        update_parameter, (existing_parameter, value)
                     ))
             else:
                 if parameter_template := self.parameter_templates.get(name):
@@ -453,12 +453,13 @@ def create_parameter(inventree_api, part, parameter_template, value):
         msg = e.args[0]["body"]
         return f"failed to create parameter '{parameter_template.name}' with '{msg}'"
 
-def update_parameter(parameter, name, value):
+def update_parameter(parameter, value):
     try:
         parameter.save({"data": value})
     except HTTPError as e:
         msg = e.args[0]["body"]
-        return f"failed to update parameter '{name}' to '{value}' with '{msg}'"
+        parameter_name = parameter.template_detail["name"]
+        return f"failed to update parameter '{parameter_name}' to '{value}' with '{msg}'"
 
 SANITIZE_PARAMETER = re.compile("±")
 
