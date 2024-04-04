@@ -103,7 +103,7 @@ INVENTREE_HOST_REGEX = re.compile(
 
 DEFAULT_CONFIG_VARS = {
     "interactive": "twice",
-    "max_results": 10,
+    "interactive_part_matches": 10,
     "request_timeout": 15.0,
     "retry_timeout": 3.0,
 }
@@ -114,6 +114,9 @@ VALID_CONFIG_VARS = {
     "scraping",
     "datasheets",
     *DEFAULT_CONFIG_VARS,
+}
+RENAMED_CONFIG_VARS = {
+    "max_results": "interactive_part_matches",
 }
 
 _CONFIG_LOADED = None
@@ -128,8 +131,15 @@ def get_config(reload=False):
         try:
             _CONFIG_LOADED = yaml.safe_load(config.read_text(encoding="utf-8"))
             for invalid_parameter in set(_CONFIG_LOADED) - VALID_CONFIG_VARS:
-                warning(f"invalid parameter '{invalid_parameter}' in '{CONFIG}'")
-                del _CONFIG_LOADED[invalid_parameter]
+                if renamed_parameter := RENAMED_CONFIG_VARS.get(invalid_parameter):
+                    warning(
+                        f"deprecated parameter '{invalid_parameter}' in {CONFIG} "
+                        f"(renamed to '{renamed_parameter}')"
+                    )
+                    _CONFIG_LOADED[renamed_parameter] = _CONFIG_LOADED.pop(invalid_parameter)
+                else:
+                    warning(f"invalid parameter '{invalid_parameter}' in '{CONFIG}'")
+                    del _CONFIG_LOADED[invalid_parameter]
             _CONFIG_LOADED = {**DEFAULT_CONFIG_VARS, **_CONFIG_LOADED}
             return _CONFIG_LOADED
         except MarkedYAMLError as e:

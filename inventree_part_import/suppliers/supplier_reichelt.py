@@ -16,7 +16,7 @@ LOCALE_CHANGE_URL = f"{BASE_URL}index.html?ACTION=12&PAGE=46"
 SEARCH_URL = f"{BASE_URL}index.html?ACTION=446&q={{}}"
 
 class Reichelt(Supplier):
-    def setup(self, language, location, scraping, max_results):
+    def setup(self, language, location, scraping, interactive_part_matches):
         if location not in LOCATION_MAP:
             return self.load_error(f"unsupported location '{location}'")
 
@@ -34,7 +34,7 @@ class Reichelt(Supplier):
             rf";CCOUNTRY={LOCATION_MAP[self.location]};LANGUAGE={self.language};CTYPE=1;"
         )
 
-        self.max_results = max_results
+        self.max_results = interactive_part_matches
 
         return True
 
