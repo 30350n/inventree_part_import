@@ -254,7 +254,6 @@ def inventree_part_import(
         action = "updated" if update or update_recursive else "imported"
         success(f"{action} all parts!")
 
-MPN_HEADERS = ("Manufacturer Part Number", "MPN")
 def load_tabular_data(path: Path):
     info(f"reading {path.name} ...")
     with path.open(encoding="utf-8") as file:
@@ -270,6 +269,10 @@ def load_tabular_data(path: Path):
             error(f"failed to parse file with '{e.__doc__}'")
             return None
 
+    mpn_headers = get_config().get(
+        "auto_detect_columns", ["Manufacturer Part Number", "MPN", "part_id"]
+    )
+
     headers = {
         stripped: i
         for i, header in enumerate(data.headers)
@@ -277,13 +280,13 @@ def load_tabular_data(path: Path):
     }
     sorted_headers = sorted(
         headers,
-        key=lambda header: max(fuzz.partial_ratio(header, mpn) for mpn in MPN_HEADERS),
+        key=lambda header: max(fuzz.partial_ratio(header, mpn) for mpn in mpn_headers),
         reverse=True,
     )
 
     if len(sorted_headers) == 0:
         column_index = 0
-    elif sorted_headers[0] in MPN_HEADERS and sorted_headers[1] not in MPN_HEADERS:
+    elif sorted_headers[0] in mpn_headers and sorted_headers[1] not in mpn_headers:
         column_index = headers[sorted_headers[0]]
     else:
         prompt("select the column to import")
