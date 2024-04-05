@@ -89,8 +89,10 @@ The following parameters have to be set:
 - `language`: the default language to use when searching suppliers (ISO639 code)
 - `location`: the default location to use when searching suppliers (ISO3166 code)
 - `scrape`: whether or not web page scraping is allowed (this can get you temporarily blocked)
-- `max_results`: the maximum number of results to display in interactive mode
+- `interactive_part_matches`: the maximum number of parts to display in interactive mode
   (set to null to disable)
+- `interactive_category_matches`: the maximum number of categories to display in interactive mode
+- `interactive_parameter_matches`: the maximum number of parameters to display in interactive mode
 - `part_selection_format`: standard python format str used to format each line of the
   interactive part selection menu (any fields from the `ApiPart` dataclass can be used,
   defaults to: `"{MPN} | {manufacturer} | {SKU} | {supplier_link}"`)
