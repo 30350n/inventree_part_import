@@ -77,6 +77,10 @@ class LCSC(Supplier):
                 if "front" in image_url:
                     break
 
+        datasheet_url = lcsc_part.get("pdfUrl").replace(
+            "//datasheet.lcsc.com/", "//wmsc.lcsc.com/wmsc/upload/file/pdf/v2/"
+        )
+
         if url := lcsc_part.get("url"):
             url_separator = "/product-detail/"
             prefix, product_url_id = url.split(url_separator)
@@ -121,7 +125,7 @@ class LCSC(Supplier):
         return ApiPart(
             description=REMOVE_HTML_TAGS.sub("", description),
             image_url=image_url,
-            datasheet_url=lcsc_part.get("pdfUrl"),
+            datasheet_url=datasheet_url,
             supplier_link=supplier_link,
             SKU=lcsc_part.get("productCode", ""),
             manufacturer=lcsc_part.get("brandNameEn", ""),
