@@ -12,7 +12,7 @@ from inventree.company import ManufacturerPart, SupplierPart
 from inventree.part import ParameterTemplate, Part, PartCategory
 from platformdirs import user_cache_path
 from requests.compat import unquote, urlparse
-from requests.exceptions import HTTPError, Timeout
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from .error_helper import *
 from .retries import retry_timeouts
@@ -192,7 +192,7 @@ def _download_file_content(url):
             with retry:
                 result = session.get(url, headers=DOWNLOAD_HEADERS)
                 result.raise_for_status()
-    except (HTTPError, Timeout) as e:
+    except (ConnectionError, HTTPError, Timeout) as e:
         warning(f"failed to download file with '{e}'")
         return None, None
 
