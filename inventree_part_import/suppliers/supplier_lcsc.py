@@ -128,7 +128,7 @@ class LCSC(Supplier):
             datasheet_url=datasheet_url,
             supplier_link=supplier_link,
             SKU=lcsc_part.get("productCode", ""),
-            manufacturer=lcsc_part.get("brandNameEn", ""),
+            manufacturer=REMOVE_HTML_TAGS.sub("", lcsc_part.get("brandNameEn", "")),
             manufacturer_link="",
             MPN=lcsc_part.get("productModel", ""),
             quantity_available=float(lcsc_part.get("stockNumber", 0)),
