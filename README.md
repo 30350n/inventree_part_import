@@ -93,6 +93,7 @@ The following parameters have to be set:
   (set to null to disable)
 - `interactive_category_matches`: the maximum number of categories to display in interactive mode
 - `interactive_parameter_matches`: the maximum number of parameters to display in interactive mode
+- `ipn_template`: Optional default template for defining IPN part numbers.  See [IPN Templates](ipn_templates).
 - `part_selection_format`: standard python format str used to format each line of the
   interactive part selection menu (any fields from the `ApiPart` dataclass can be used,
   defaults to: `"{MPN} | {manufacturer} | {SKU} | {supplier_link}"`)
@@ -147,6 +148,7 @@ Additionally you can define the following meta attributes (starting with `_`):
 - `_aliases` has to be a list of supplier category names which will be mapped to that category
 - `_description` specifies the categories description (defaults to category name)
 - `_ignore` makes `inventree-part-import` ignore that category, as well as any subcategories
+- `_ipn_template` specifies a template to use for defining IPN part numbers (see [IPN Templates](#ipn-templates))
 - `_parameters` has to be a list of parameter names (for parameters defined in
   [`parameters.yaml`](#parametersyaml)) this category uses<br>
   **note: parameters get inherited by sub categories**
@@ -194,6 +196,50 @@ Input Voltage:
     _description: Max Input Voltage # optional
     _unit: V # experimental, this can lead to import problems
 ```
+
+### IPN Templates
+
+You can optionally use IPN templates to define a custom IPN name on parts.  If you do not configure
+any templates, the IPN value is not used.  When templates are defined, which are standard Jinja2
+templates, the template result along with the CLI option `--ipn never|new|always`, are used to
+define the IPN value.  You can have a single default template for all imports, or customize the
+template per category in the heirarchy.  
+
+Templates have several context variables available:
+
+- `category`: the category name of the part
+- `manufacturer`: the name of the part manufacturer
+- `parameters`: a dictionary of all parameters
+- `part_id`: a unique number (the primary ID of the part), useful to create unique numbers
+- `MPN`: the manufacturer part number
+- `SKU`: the suppliers part SKU
+- `supplier`: the name of the supplier
+
+Some examples:
+- `PN-{{ part_id }}`: A unique ID such as `PN-382`
+- `{{ supplier }}-{{ SKU }}`: A combination of supplier name and SKU, such as `LCSC-C38221`
+- `{{ parameters.Resistance }}-{{parameters.Wattage }}-{{parameters["Package Type"] }}`: A name
+  built from parameters, such as `18.2K-0.25W-0603`.  
+  
+  > Some vendors have more consistent parameters than others, so consider using the `--dry` CLI
+  > option on several parts which will show the template results without updating the database.  
+  
+  > A missing value for a context variable, such as a parameter that doesn't exist, will result in an empty value.
+  > Template values are filtered to remove all leading, trailing, and duplicate common
+  > separator values (`-`, `_`, and ` `), to avoid names like `RES---322` when parameter values are
+  > not matched.
+
+The first supplier that finds a matching part will be used to define the context variables for the
+template (for example, the parameters from the first successful supplier search).  Use the `-s <supplier>` option to always search a specific supplier first.
+
+You optionally specify category-specific tempates in
+`(categories.yaml)[categoriesyaml]` using `_ipn_template`.  For example, `Resistor` might have 
+`RES-{{ parameters.Resistance }}` whereas `Capacitor` might use `CAP-{{ parameters.Capacitance }}`.
+Templates are searched in hierarchical order, starting with the closest category and working up the
+tree to the top level.   If no category template is found, the default template 
+in `(config.yaml)[configyaml]` under `ipn_template` is used.  If no template is found, the IPN number will not be
+added.  Use the `--ipn never|new|always` CLI option for runtime control, where `new`
+is the default behavior (only add an IPN if the part does not already have one)
 
 ### Pre Creation Hooks (`hooks.py`)
 
