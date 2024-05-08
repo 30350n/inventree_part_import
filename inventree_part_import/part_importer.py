@@ -6,10 +6,10 @@ from string import Formatter, _string
 from cutie import select
 from inventree.company import Company, ManufacturerPart, SupplierPart, SupplierPriceBreak
 from inventree.part import Parameter, Part
+from jinja2 import Template
 from requests.compat import quote
 from requests.exceptions import HTTPError
 from thefuzz import fuzz
-from jinja2 import Template
 
 from .categories import setup_categories_and_parameters
 from .config import CATEGORIES_CONFIG, CONFIG, get_config, get_pre_creation_hooks
@@ -29,13 +29,10 @@ class ImportResult(Enum):
     def __or__(self, other):
         return self if self.value < other.value else other
 
-class IPNSetting(Enum):
-    NEVER = 0
-    NEW = 1
-    ALWAYS = 2
+IPNSetting = Enum("false", "true", "overwrite")
 
 class PartImporter:
-    def __init__(self, inventree_api, interactive=False, verbose=False, ipn=IPNSetting.NEW):
+    def __init__(self, inventree_api, interactive=False, verbose=False, ipn=IPNSetting.true):
         self.api = inventree_api
         self.interactive = interactive
         self.verbose = verbose
@@ -155,9 +152,9 @@ class PartImporter:
 
     def import_part_ipn(self, api_part, supplier):
         # only add IPN if --ipn ALWAYS, or --ipn NEW and part doesn't yet have an IPN
-        if self.ipn == IPNSetting.NEVER:
+        if self.ipn == IPNSetting.false:
             return True
-        if self.ipn == IPNSetting.NEW and hasattr(self.existing_part, "IPN") and self.existing_part.IPN:
+        if self.ipn == IPNSetting.true and getattr(self.existing_part, "IPN", None):
             return True
 
         # find the outer most mapped category (the leaf category)
@@ -170,12 +167,11 @@ class PartImporter:
         else:
             return True
 
-        # locate the closest template in category heirarchy
-        ipn_template = None
+        # locate the closest template in category hierarchy
+        ipn_format = None
         for subcategory in reversed(category.path):
-            mapped_subcategory = self.category_map.get(subcategory.lower())
-            if mapped_subcategory: # and hasattr(mapped_subcategory, "ipn_template") and mapped_subcategory.ipn_template and mapped_subcategory.ipn_template.strip():
-                ipn_template = mapped_subcategory.ipn_template
+            if mapped_subcategory := self.category_map.get(subcategory.lower()):
+                ipn_format = mapped_subcategory.ipn_format
                 break
         else:
             return True
@@ -186,15 +182,19 @@ class PartImporter:
             "supplier": supplier.name,
             "category": category.name if category else "",
             "parameters": api_part.parameters,
-            **{attr: getattr(api_part, attr) for attr in dir(api_part) if not attr.startswith('_') and not callable(getattr(api_part, attr))},
+            **{
+                attr: getattr(api_part, attr)
+                for attr in dir(api_part)
+                if not attr.startswith('_') and not callable(getattr(api_part, attr))
+            },
         }
 
         # render the IPN template
         try:
-            template = Template(ipn_template)
+            template = Template(ipn_format)
             ipn = template.render(context)
         except Exception as e:
-            error(f"failed to render IPN template '{ipn_template}' with: {e}")
+            error(f"failed to render IPN template '{ipn_format}' with: {e}")
             return False
 
         # if we got a resulting ipn, other than just separators, update the part
@@ -209,7 +209,7 @@ class PartImporter:
                 update_object_data(self.existing_part, {"IPN": ipn})
 
             if self.verbose or self.dry_run:
-                info(f"set part IPN to '{ipn}' using template '{ipn_template}'")
+                info(f"set part IPN to '{ipn}' using template '{ipn_format}'")
 
         return True
 
