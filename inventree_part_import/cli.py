@@ -56,7 +56,7 @@ IPNChoices = click.Choice(("false", "true", "overwrite"), case_sensitive=False)
     "mode for any parts that failed to import correctly."
 ))
 @click.option("-I", "--ipn", type=IPNChoices, default="true",
-    help="Set internal part number according to ipn_format."
+    help="Set internal part number according to the ipn_format config variable."
 )
 @click.option("-d", "--dry", is_flag=True, help="Run without modifying InvenTree database.")
 @click.option("-c", "--config-dir", help="Override path to config directory.")
