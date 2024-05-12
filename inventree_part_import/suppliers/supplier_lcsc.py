@@ -7,8 +7,8 @@ from ..error_helper import *
 from .base import ApiPart, Supplier
 from .scrape import REMOVE_HTML_TAGS, scrape
 
-API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
-CURRENCY_URL     = f"{API_BASE_URL}home/currency?currencyCode={{}}"
+API_BASE_URL = "https://wmsc.lcsc.com/ftps/wm/"
+CURRENCY_URL     = f"https://wmsc.lcsc.com/wmsc/home/currency?currencyCode={{}}"
 SEARCH_URL       = f"{API_BASE_URL}search/global?keyword={{}}"
 PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
