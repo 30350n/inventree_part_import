@@ -30,14 +30,14 @@ class LCSC(Supplier):
             warning("failed to search part at LCSC (internal API error)")
             return [], 0
 
-        if product_detail := result["tipProductDetailUrlVO"]:
+        if product_detail := result.get("tipProductDetailUrlVO"):
             url = PRODUCT_INFO_URL.format(product_detail["productCode"])
             for _ in range(3):
                 detail_request = scrape(url, setup_hook=self.setup_hook)
                 if detail_request and (detail_result := detail_request.json().get("result")):
                     return [self.get_api_part(detail_result)], 1
             warning("failed to retrieve product data from LCSC (internal API error)")
-        elif products := result["productSearchResultVO"]:
+        elif products := result.get("productSearchResultVO"):
             filtered_matches = [
                 product for product in products["productList"]
                 if product["productModel"].lower().startswith(search_term.lower())
