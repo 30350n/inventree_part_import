@@ -7,8 +7,8 @@ from ..error_helper import *
 from .base import ApiPart, Supplier
 from .scrape import REMOVE_HTML_TAGS, scrape
 
-API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
-CURRENCY_URL     = f"{API_BASE_URL}home/currency?currencyCode={{}}"
+API_BASE_URL = "https://wmsc.lcsc.com/ftps/wm/"
+CURRENCY_URL     = f"https://wmsc.lcsc.com/wmsc/home/currency?currencyCode={{}}"
 SEARCH_URL       = f"{API_BASE_URL}search/global?keyword={{}}"
 PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
@@ -30,14 +30,14 @@ class LCSC(Supplier):
             warning("failed to search part at LCSC (internal API error)")
             return [], 0
 
-        if product_detail := result["tipProductDetailUrlVO"]:
+        if product_detail := result.get("tipProductDetailUrlVO"):
             url = PRODUCT_INFO_URL.format(product_detail["productCode"])
             for _ in range(3):
                 detail_request = scrape(url, setup_hook=self.setup_hook)
                 if detail_request and (detail_result := detail_request.json().get("result")):
                     return [self.get_api_part(detail_result)], 1
             warning("failed to retrieve product data from LCSC (internal API error)")
-        elif products := result["productSearchResultVO"]:
+        elif products := result.get("productSearchResultVO"):
             filtered_matches = [
                 product for product in products["productList"]
                 if product["productModel"].lower().startswith(search_term.lower())
@@ -149,17 +149,8 @@ def cleanup_url_id(url):
     return url
 
 CURRENCY_MAP = {
-    "US$": "USD",
-    "A$":  "AUD",
-    "C$":  "CAD",
+    "$":   "USD",
     "€":   "EUR",
-    "£":   "GBP",
+    "¥":   "CNY",
     "HK$": "HKD",
-    "JP¥": "JPY",
-    "RM":  "MYR",
-    "S$":  "SGD",
-    "₽":   "RUB",
-    "kr":  "SEK",
-    "kr.": "DKK",
-    "₹":   "INR",
 }
