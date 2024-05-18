@@ -18,7 +18,10 @@ to install standalone applications)*
 
 ### Arch Linux
 
-Latest version from PyPI is available on AUR as [python-inventree-part-import](https://aur.archlinux.org/packages/python-inventree-part-import); git master version is available as [python-inventree-part-import-git](https://aur.archlinux.org/packages/python-inventree-part-import-git).
+Latest version from PyPI is available on AUR as
+[python-inventree-part-import](https://aur.archlinux.org/packages/python-inventree-part-import).<br>
+Git master version is available as
+[python-inventree-part-import-git](https://aur.archlinux.org/packages/python-inventree-part-import-git).
 
 ## Getting Started
 
