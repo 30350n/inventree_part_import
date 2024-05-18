@@ -16,6 +16,10 @@ pipx install inventree-part-import
 *(`pip` should also work, but [`pipx`](https://github.com/pypa/pipx) is the new recommended way
 to install standalone applications)*
 
+### Arch Linux
+
+Latest version from PyPI is available on AUR as [python-inventree-part-import](https://aur.archlinux.org/packages/python-inventree-part-import); git master version is available as [python-inventree-part-import-git](https://aur.archlinux.org/packages/python-inventree-part-import-git).
+
 ## Getting Started
 
 ### Initial Configuration
