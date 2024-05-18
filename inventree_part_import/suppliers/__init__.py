@@ -4,7 +4,7 @@ from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 from ..config import SUPPLIERS_CONFIG, get_config, load_suppliers_config, update_config_file
-from ..error_helper import *
+from error_helper import *
 from ..inventree_helpers import Company
 from .base import Supplier
 

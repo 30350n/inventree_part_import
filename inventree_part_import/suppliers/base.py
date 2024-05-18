@@ -4,7 +4,7 @@ from functools import cache
 from inspect import _empty
 
 from ..config import get_pre_creation_hooks
-from ..error_helper import error
+from error_helper import error
 
 @dataclass
 class ApiPart:

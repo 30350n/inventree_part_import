@@ -14,7 +14,7 @@ from platformdirs import user_cache_path
 from requests.compat import unquote, urlparse
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
-from .error_helper import *
+from error_helper import *
 from .retries import retry_timeouts
 
 INVENTREE_CACHE = user_cache_path(__package__, ensure_exists=True) / "inventree"

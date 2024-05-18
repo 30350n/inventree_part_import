@@ -10,7 +10,7 @@ import requests
 from requests.compat import quote, urlencode
 from requests.exceptions import HTTPError, JSONDecodeError, Timeout
 
-from ..error_helper import *
+from error_helper import *
 from ..localization import get_country, get_language
 from ..retries import retry_timeouts
 from .base import ApiPart, Supplier

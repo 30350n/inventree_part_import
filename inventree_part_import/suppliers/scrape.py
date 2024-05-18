@@ -4,7 +4,7 @@ from fake_useragent import UserAgent
 from requests import Response, Session
 
 from ..config import get_config
-from ..error_helper import *
+from error_helper import *
 from ..retries import retry_timeouts
 
 _SESSION = None

@@ -4,7 +4,7 @@ from types import MethodType
 from bs4 import BeautifulSoup
 from mouser.api import MouserPartSearchRequest
 
-from ..error_helper import *
+from error_helper import *
 from ..retries import retry_timeouts
 from .base import ApiPart, Supplier, money2float
 from .scrape import DOMAIN_REGEX, DOMAIN_SUB, REMOVE_HTML_TAGS, scrape

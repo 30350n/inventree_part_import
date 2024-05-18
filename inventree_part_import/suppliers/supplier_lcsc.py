@@ -3,7 +3,7 @@ import re
 from requests import Session
 
 from ..config import get_config
-from ..error_helper import *
+from error_helper import *
 from .base import ApiPart, Supplier
 from .scrape import REMOVE_HTML_TAGS, scrape
 

@@ -4,7 +4,7 @@ from inventree.part import ParameterTemplate, PartCategory, PartCategoryParamete
 
 from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config,
                      get_parameters_config, update_config_file)
-from .error_helper import *
+from error_helper import *
 
 def setup_categories_and_parameters(inventree_api):
     dry_run = hasattr(inventree_api, "DRY_RUN")

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ..suppliers.base import Supplier
 
 from .. import __package__ as parent_package
-from ..error_helper import *
+from error_helper import *
 from ..localization import currencies, get_country, get_language
 from ..retries import RetryInvenTreeAPI
 

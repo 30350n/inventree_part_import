@@ -6,7 +6,7 @@ from requests import Session
 from requests.compat import quote, urljoin
 
 from ..config import get_config
-from ..error_helper import *
+from error_helper import *
 from ..localization import get_language
 from .base import ApiPart, Supplier, money2float
 from .scrape import scrape

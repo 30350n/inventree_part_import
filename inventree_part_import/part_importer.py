@@ -12,7 +12,7 @@ from thefuzz import fuzz
 
 from .categories import setup_categories_and_parameters
 from .config import CATEGORIES_CONFIG, CONFIG, get_config, get_pre_creation_hooks
-from .error_helper import *
+from error_helper import *
 from .inventree_helpers import (create_manufacturer, get_manufacturer_part,
                                 get_parameter_templates, get_part, get_supplier_part,
                                 update_object_data, upload_datasheet, upload_image)

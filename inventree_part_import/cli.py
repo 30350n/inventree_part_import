@@ -12,7 +12,7 @@ from thefuzz import fuzz
 from . import error_helper
 from .config import (CONFIG, SUPPLIERS_CONFIG, get_config, get_config_dir, set_config_dir,
                      setup_inventree_api, update_config_file, update_supplier_config)
-from .error_helper import *
+from error_helper import *
 from .inventree_helpers import get_category, get_category_parts
 from .part_importer import ImportResult, PartImporter
 from .suppliers import get_suppliers, setup_supplier_companies
