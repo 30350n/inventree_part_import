@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from inventree.part import ParameterTemplate, PartCategory, PartCategoryParameterTemplate
 
-from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config,
+from .config import (CATEGORIES_CONFIG, PARAMETERS_CONFIG, get_categories_config, get_config,
                      get_parameters_config, update_config_file)
 from .error_helper import *
 
@@ -161,6 +161,7 @@ class Category:
     ignore: bool
     structural: bool
     aliases: list[str] = field(default_factory=list)
+    ipn_format: str = ""
     parameters: list[str] = field(default_factory=list)
     part_category: PartCategory = None
 
@@ -194,8 +195,10 @@ class Category:
                     f"'{CATEGORIES_CONFIG}'"
                 )
 
-CATEGORY_ATTRIBUTES = {"_parameters", "_description", "_ignore", "_structural", "_aliases"}
-def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
+CATEGORY_ATTRIBUTES = {
+    "_parameters", "_description", "_ignore", "_structural", "_aliases", "_ipn_format",
+}
+def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple(), parent=None):
     if not categories_dict:
         return {}
 
@@ -214,20 +217,23 @@ def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
             if child.startswith("_") and child not in CATEGORY_ATTRIBUTES:
                 warning(f"ignoring unknown special attribute '{child}' in category '{name}'")
 
+        default_ipn_format = parent.ipn_format if parent else get_config().get("ipn_format")
+
         new_parameters = parameters + tuple(values.get("_parameters", []))
         new_path = path + (name,)
 
-        categories[new_path] = Category(
+        categories[new_path] = category = Category(
             name=name,
             path=list(new_path),
             description=values.get("_description", name),
             ignore=values.get("_ignore", False),
             structural=values.get("_structural", False),
             aliases=values.get("_aliases", []),
+            ipn_format=values.get("_ipn_format", default_ipn_format),
             parameters=new_parameters,
         )
 
-        categories.update(parse_category_recursive(values, new_parameters, new_path))
+        categories.update(parse_category_recursive(values, new_parameters, new_path, category))
 
     return categories
 
