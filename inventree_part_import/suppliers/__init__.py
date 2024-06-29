@@ -45,7 +45,9 @@ def setup_supplier_companies(inventree_api):
     global_config = get_config()
     with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
         for id, supplier_object in _SUPPLIER_OBJECTS.items():
-            supplier_config = suppliers_config[id]
+            supplier_config = suppliers_config.get(id)
+            if supplier_config is None:
+                supplier_config = suppliers_config[id] = {}
             api_company = Company(
                 name=supplier_object.name,
                 currency=supplier_config.get("currency", global_config["currency"]),
