@@ -58,6 +58,17 @@ class Mouser(Supplier):
         supplier_link = DOMAIN_REGEX.sub(
             DOMAIN_SUB.format(self.locale_url), mouser_part.get("ProductDetailUrl"))
 
+        category = mouser_part.get("Category")
+        incomplete_category_path = [category] if category else []
+
+        parameters = {}
+        for attribute in mouser_part.get("ProductAttributes", []):
+            name = attribute.get("AttributeName")
+            value = attribute.get("AttributeValue")
+            if existing_value := parameters.get(name):
+                value = ", ".join((existing_value, value))
+            parameters[name] = value
+
         mouser_price_breaks = mouser_part.get("PriceBreaks", [])
         price_breaks = {
             price_break.get("Quantity"): money2float(price_break.get("Price"))
@@ -84,8 +95,8 @@ class Mouser(Supplier):
             MPN=mouser_part.get("ManufacturerPartNumber", ""),
             quantity_available=float(quantity_available),
             packaging="",
-            category_path=None,
-            parameters=None,
+            category_path=incomplete_category_path,
+            parameters=parameters,
             price_breaks=price_breaks,
             currency=currency,
         )
@@ -97,30 +108,29 @@ class Mouser(Supplier):
     def finalize_hook(self, api_part: ApiPart):
         if not self.use_scraping:
             hint("scraping is disabled: can't finalize parameters and category_path")
-            api_part.parameters = {}
             return True
 
         url = api_part.supplier_link
         if not (result := scrape(url, fallback_domains=FALLBACK_DOMAINS)):
             warning(f"failed to finalize part specifications from '{url}' (blocked)")
-            return False
+            return True
 
         soup = BeautifulSoup(result.content, "html.parser")
 
         if specs_table := soup.find("table", class_="specs-table"):
-            api_part.parameters = dict(
+            api_part.parameters.update(dict(
                 tuple(map(lambda column: column.text.strip().strip(":"), row.find_all("td")[:2]))
                 for row in specs_table.find_all("tr")[1:]
-            )
+            ))
         else:
-            warning(f"failed to get part specifications from '{url}' (might be blocked)")
-            return False
+            warning(f"failed to get parameters from '{url}' (might be blocked)")
+            return True
 
         if breadcrumb := soup.find("ol", class_="breadcrumb"):
             api_part.category_path = [li.text.strip() for li in breadcrumb.find_all("li")[1:-1]]
         else:
             warning(f"failed to get category path from '{url}' (might be blocked)")
-            return False
+            return True
 
         return True
 
