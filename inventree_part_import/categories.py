@@ -194,8 +194,10 @@ class Category:
                     f"'{CATEGORIES_CONFIG}'"
                 )
 
-CATEGORY_ATTRIBUTES = {"_parameters", "_description", "_ignore", "_structural", "_aliases"}
-def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
+CATEGORY_ATTRIBUTES = {
+    "_parameters", "_omit_parameters", "_description", "_ignore", "_structural", "_aliases"
+}
+def parse_category_recursive(categories_dict, parent_parameters=tuple(), path=tuple()):
     if not categories_dict:
         return {}
 
@@ -214,9 +216,13 @@ def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
             if child.startswith("_") and child not in CATEGORY_ATTRIBUTES:
                 warning(f"ignoring unknown special attribute '{child}' in category '{name}'")
 
-        new_parameters = parameters + tuple(values.get("_parameters", []))
-        new_path = path + (name,)
+        omitted_parameters = values.get("_omit_parameters", [])
+        parameters = tuple(set(parent_parameters) - set(omitted_parameters))
+        parameters += tuple(values.get("_parameters", []))
+        for parameter in set(omitted_parameters) - set(parent_parameters):
+            warning(f"failed to omit parameter '{parameter}' in category '{name}'")
 
+        new_path = path + (name,)
         categories[new_path] = Category(
             name=name,
             path=list(new_path),
@@ -224,10 +230,10 @@ def parse_category_recursive(categories_dict, parameters=tuple(), path=tuple()):
             ignore=values.get("_ignore", False),
             structural=values.get("_structural", False),
             aliases=values.get("_aliases", []),
-            parameters=new_parameters,
+            parameters=parameters,
         )
 
-        categories.update(parse_category_recursive(values, new_parameters, new_path))
+        categories.update(parse_category_recursive(values, parameters, new_path))
 
     return categories
 
