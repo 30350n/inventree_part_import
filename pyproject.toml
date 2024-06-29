@@ -5,28 +5,28 @@ description = "CLI to import parts from suppliers like DigiKey, LCSC, Mouser, et
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
-  "Environment :: Console",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 5 - Production/Stable",
 ]
 license = "MIT"
 authors = [{ name = "Bobbe", email = "mail@30350n.de" }]
 dependencies = [
-  "beautifulsoup4",
-  "click",
-  "cutie",
-  "digikey-api>=1.0",
-  "fake-useragent",
-  "inventree>=0.13.2",
-  "isocodes",
-  "mouser>=0.1.5",
-  "platformdirs>=3.2.0",
-  "pyyaml",
-  "requests",
-  "tablib[ods, xls, xlsx]",
-  "thefuzz",
+    "beautifulsoup4",
+    "click",
+    "cutie",
+    "digikey-api>=1.0",
+    "fake-useragent",
+    "inventree>=0.13.2",
+    "isocodes",
+    "mouser>=0.1.5",
+    "platformdirs>=3.2.0",
+    "pyyaml",
+    "requests",
+    "tablib[ods, xls, xlsx]",
+    "thefuzz",
 ]
 
 [project.urls]
@@ -41,13 +41,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 exclude = [
-  ".git",
-  ".github/",
-  ".gitignore",
-  ".gitmodules",
-  ".pre-commit-config.yaml",
-  "tests/",
-  "tasks.py",
+    ".git",
+    ".github/",
+    ".gitignore",
+    ".gitmodules",
+    ".pre-commit-config.yaml",
+    "tests/",
+    "tasks.py",
 ]
 
 [tool.autopep8]
