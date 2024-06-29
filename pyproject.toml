@@ -50,6 +50,9 @@ exclude = [
     "tasks.py",
 ]
 
+[project.optional-dependencies]
+dev = ["autopep8", "pre-commit", "pytest"]
+
 [tool.autopep8]
 aggressive = 3
 max_line_length = 96
