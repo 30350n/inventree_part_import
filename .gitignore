@@ -1,6 +1,10 @@
 .history/
 .vscode/
+
 __pycache__
+.venv/
+
+.envrc
 
 Pipfile
 Pipfile.lock
