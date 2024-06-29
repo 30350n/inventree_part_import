@@ -87,8 +87,17 @@ def get_suppliers(reload=False, setup=True) -> tuple[dict, dict]:
             error(f"failed to load supplier module '{module_name}' ({suffix} defined)")
             continue
 
+        if supplier_classes[0].SUPPORT_LEVEL is None:
+            error(f"failed to load supplier module '{module_name}' (undefined SUPPORT_LEVEL)")
+            continue
+
         id = module_name.split("supplier_", 1)[-1]
         _AVAILABLE_SUPPLIER_OBJECTS[id] = supplier_classes[0]()
+
+    _AVAILABLE_SUPPLIER_OBJECTS = dict(sorted(
+        _AVAILABLE_SUPPLIER_OBJECTS.items(),
+        key=lambda supplier_item: (supplier_item[1].SUPPORT_LEVEL, supplier_item[1].name),
+    ))
 
     _SUPPLIER_OBJECTS = load_suppliers_config(_AVAILABLE_SUPPLIER_OBJECTS, setup=setup)
 

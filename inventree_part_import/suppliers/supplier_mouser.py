@@ -6,10 +6,12 @@ from mouser.api import MouserPartSearchRequest
 
 from ..error_helper import *
 from ..retries import retry_timeouts
-from .base import ApiPart, Supplier, money2float
+from .base import ApiPart, Supplier, SupplierSupportLevel, money2float
 from .scrape import DOMAIN_REGEX, DOMAIN_SUB, REMOVE_HTML_TAGS, scrape
 
 class Mouser(Supplier):
+    SUPPORT_LEVEL = SupplierSupportLevel.SCRAPING
+
     def setup(self, api_key, currency, scraping, locale_url="www.mouser.com"):
         os.environ["MOUSER_PART_API_KEY"] = api_key
 

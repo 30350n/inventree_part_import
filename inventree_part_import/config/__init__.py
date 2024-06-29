@@ -267,12 +267,23 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
         suppliers_out = {}
         try:
             with update_config_file(SUPPLIERS_CONFIG) as suppliers_config_data:
+                previous_supplier = None
                 for id, supplier_config in suppliers_config_data.items():
                     if supplier_config is None:
                         supplier_config = {}
                     if not (supplier := suppliers.get(id)):
-                        warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
+                        if setup:
+                            warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
                         continue
+                    if setup and previous_supplier:
+                        if previous_supplier[1].SUPPORT_LEVEL > supplier.SUPPORT_LEVEL:
+                            warning(
+                                f"supplier '{previous_supplier[0]}' (support level "
+                                f"{previous_supplier[1].SUPPORT_LEVEL.name}) is used ahead of "
+                                f"supplier '{id}' (support level {supplier.SUPPORT_LEVEL.name})"
+                            )
+                            hint(f"you might want to reorder them in '{SUPPLIERS_CONFIG}'")
+                    previous_supplier = (id, supplier)
                     new_supplier_config = update_supplier_config(supplier, supplier_config)
                     if new_supplier_config is not None:
                         suppliers_config_data[id] = new_supplier_config

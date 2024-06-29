@@ -8,7 +8,7 @@ from requests.compat import quote, urljoin
 from ..config import get_config
 from ..error_helper import *
 from ..localization import get_language
-from .base import ApiPart, Supplier, money2float
+from .base import ApiPart, Supplier, SupplierSupportLevel, money2float
 from .scrape import scrape
 
 BASE_URL = "https://reichelt.com/"
@@ -16,6 +16,8 @@ LOCALE_CHANGE_URL = f"{BASE_URL}index.html?ACTION=12&PAGE=46"
 SEARCH_URL = f"{BASE_URL}index.html?ACTION=446&q={{}}"
 
 class Reichelt(Supplier):
+    SUPPORT_LEVEL = SupplierSupportLevel.SCRAPING
+
     def setup(self, language, location, scraping, interactive_part_matches):
         if location not in LOCATION_MAP:
             return self.load_error(f"unsupported location '{location}'")

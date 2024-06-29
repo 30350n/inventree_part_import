@@ -4,7 +4,7 @@ from requests import Session
 
 from ..config import get_config
 from ..error_helper import *
-from .base import ApiPart, Supplier
+from .base import ApiPart, Supplier, SupplierSupportLevel
 from .scrape import REMOVE_HTML_TAGS, scrape
 
 API_BASE_URL = "https://wmsc.lcsc.com/ftps/wm/"
@@ -13,6 +13,8 @@ SEARCH_URL       = f"{API_BASE_URL}search/global?keyword={{}}"
 PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
 class LCSC(Supplier):
+    SUPPORT_LEVEL = SupplierSupportLevel.INOFFICIAL_API
+
     def setup(self, currency, ignore_duplicates=True):
         if currency not in CURRENCY_MAP.values():
             return self.load_error(f"unsupported currency '{currency}'")

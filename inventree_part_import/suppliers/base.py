@@ -1,5 +1,6 @@
 import inspect, re
 from dataclasses import dataclass
+from enum import IntEnum
 from functools import cache
 from inspect import _empty
 
@@ -60,7 +61,14 @@ class ApiPart:
             data["available"] = min(float(self.quantity_available), 9999999.0)
         return data
 
+class SupplierSupportLevel(IntEnum):
+    OFFICIAL_API = 0
+    INOFFICIAL_API = 1
+    SCRAPING = 2
+
 class Supplier:
+    SUPPORT_LEVEL: SupplierSupportLevel = None
+
     def setup(self) -> bool:
         pass
 

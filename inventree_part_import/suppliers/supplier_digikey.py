@@ -7,12 +7,14 @@ from platformdirs import user_cache_path
 from .. import __package__ as parent_package
 from ..localization import get_country, get_language
 from ..retries import retry_timeouts
-from .base import ApiPart, Supplier
+from .base import ApiPart, Supplier, SupplierSupportLevel
 
 DIGIKEY_CACHE = user_cache_path(parent_package, ensure_exists=True) / "digikey"
 DIGIKEY_CACHE.mkdir(parents=True, exist_ok=True)
 
 class DigiKey(Supplier):
+    SUPPORT_LEVEL = SupplierSupportLevel.OFFICIAL_API
+
     def setup(self, client_id, client_secret, currency, language, location):
         os.environ["DIGIKEY_CLIENT_ID"] = client_id
         os.environ["DIGIKEY_CLIENT_SECRET"] = client_secret
