@@ -94,7 +94,7 @@ class Mouser(Supplier):
             manufacturer_link="",
             MPN=mouser_part.get("ManufacturerPartNumber", ""),
             quantity_available=float(quantity_available),
-            packaging="",
+            packaging=parameters.get("Packaging", ""),
             category_path=incomplete_category_path,
             parameters=parameters,
             price_breaks=price_breaks,
