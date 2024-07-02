@@ -85,6 +85,7 @@ class Mouser(Supplier):
             quantity_available = 0
 
         api_part = ApiPart(
+            name=mouser_part.get("ManufacturerPartNumber", ""),
             description=REMOVE_HTML_TAGS.sub("", mouser_part.get("Description", "")),
             image_url=mouser_part.get("ImagePath"),
             datasheet_url=mouser_part.get("DataSheetUrl"),
