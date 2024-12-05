@@ -1,4 +1,4 @@
-import importlib.metadata
+import importlib.metadata, logging
 from pathlib import Path
 
 import click, tablib, tablib.formats
@@ -145,7 +145,9 @@ def inventree_part_import(
         supplier = only
         only_supplier = True
 
-    if not verbose:
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
         error_helper.INFO_END = "\r"
 
     if dry:
