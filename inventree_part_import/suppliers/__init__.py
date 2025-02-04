@@ -6,7 +6,7 @@ from pathlib import Path
 from ..config import SUPPLIERS_CONFIG, get_config, load_suppliers_config, update_config_file
 from ..error_helper import *
 from ..inventree_helpers import Company
-from .base import Supplier
+from .base import ScrapeSupplier, Supplier
 
 _SUPPLIERS = None
 def search(search_term, supplier_id: str = None, only_supplier=False):
@@ -80,7 +80,7 @@ def get_suppliers(reload=False, setup=True) -> tuple[dict, dict]:
 
         supplier_classes = [
             cls for cls in vars(module).values()
-            if isclass(cls) and cls is not Supplier and issubclass(cls, Supplier)
+            if isclass(cls) and cls not in (Supplier, ScrapeSupplier) and issubclass(cls, Supplier)
         ]
         if len(supplier_classes) != 1:
             suffix = "multiple Supplier classes" if supplier_classes else "no Supplier class"

@@ -1,11 +1,19 @@
-import inspect, re
+import inspect
+import re
+import time
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import cache
+from http.cookiejar import CookieJar
 from inspect import _empty
 
-from ..config import get_pre_creation_hooks
-from ..error_helper import error
+import browser_cookie3
+from fake_useragent import UserAgent
+from requests import Response, Session
+
+from ..config import get_config, get_pre_creation_hooks
+from ..error_helper import error, warning
+from ..retries import retry_timeouts
 
 @dataclass
 class ApiPart:
@@ -93,6 +101,81 @@ class Supplier:
     def load_error(self, message):
         error(f"failed to load '{self.name}' supplier module ({message})")
         return False
+
+class ScrapeSupplier(Supplier):
+    session: Session
+    cookies = CookieJar()
+
+    extra_headers = {}
+    fallback_domains = [None]
+
+    request_timeout = 0.0
+    retry_timeout = 0.0
+
+    def scrape(self, url) -> Response | None:
+        if not hasattr(self, "session"):
+            self._setup_session()
+
+        if config := get_config():
+            self.request_timeout = config["request_timeout"]
+            self.retry_timeout = config["retry_timeout"]
+
+        for retry in retry_timeouts():
+            with retry:
+                result = self.session.get(
+                    url, headers=self.extra_headers, timeout=self.request_timeout
+                )
+                if result.status_code == 200:
+                    return result
+
+        for fallback in self.fallback_domains:
+            fallback_str = f"via '{fallback}' " if fallback else ""
+            warning(
+                f"failed to get page, retrying in {self.retry_timeout}s {fallback_str}"
+                f"with new session and user agent"
+            )
+            time.sleep(self.retry_timeout)
+
+            self._setup_session()
+
+            fallback_url = DOMAIN_REGEX.sub(DOMAIN_SUB.format(fallback), url) if fallback else url
+            for retry in retry_timeouts():
+                with retry:
+                    result = self.session.get(fallback_url, headers=self.extra_headers)
+                    if result.status_code == 200:
+                        return result
+
+    def cookies_from_browser(self, browser_name: str, domain_name: str):
+        if (browser := getattr(browser_cookie3, browser_name)) not in browser_cookie3.all_browsers:
+            warning(
+                f"failed to load cookies from browser '{browser_name}' "
+                f"([{', '.join(browser.__name__ for browser in browser_cookie3.all_browsers)}])"
+            )
+
+        if not (cookies := browser(domain_name=domain_name)):
+            warning(f"browser '{browser_name}' has no cookies set for '{domain_name}'")
+        
+        self.cookies = cookies
+
+    def setup_hook(self):
+        pass
+
+    def _setup_session(self):
+        self.session = Session()
+        self.session.cookies.update(self.cookies)
+        self.session.headers.update({
+            "User-Agent": UserAgent().random,
+            "Accept-Language": "en-US,en",
+        })
+
+        for retry in retry_timeouts():
+            with retry:
+                self.setup_hook()
+
+DOMAIN_REGEX = re.compile(r"(https?://)(?:[^./]*\.?)*/")
+DOMAIN_SUB = "\\g<1>{}/"
+
+REMOVE_HTML_TAGS = re.compile(r"<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});")
 
 def money2float(money):
     money = MONEY2FLOAT_CLEANUP.sub("", money).strip()

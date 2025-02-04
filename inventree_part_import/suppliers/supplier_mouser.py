@@ -6,18 +6,30 @@ from mouser.api import MouserPartSearchRequest
 
 from ..error_helper import *
 from ..retries import retry_timeouts
-from .base import ApiPart, Supplier, SupplierSupportLevel, money2float
-from .scrape import DOMAIN_REGEX, DOMAIN_SUB, REMOVE_HTML_TAGS, scrape
+from .base import (
+    DOMAIN_REGEX,
+    DOMAIN_SUB,
+    REMOVE_HTML_TAGS,
+    ApiPart,
+    ScrapeSupplier,
+    SupplierSupportLevel,
+    money2float,
+)
 
-class Mouser(Supplier):
+class Mouser(ScrapeSupplier):
     SUPPORT_LEVEL = SupplierSupportLevel.SCRAPING
 
-    def setup(self, api_key, currency, scraping, locale_url="www.mouser.com"):
+    fallback_domains = ["www2.mouser.com", "eu.mouser.com"]
+
+    def setup(self, api_key, currency, scraping, browser_cookies="", locale_url="www.mouser.com"):
         os.environ["MOUSER_PART_API_KEY"] = api_key
 
         self.currency = currency
         self.use_scraping = scraping
         self.locale_url = locale_url
+
+        if browser_cookies:
+            self.cookies_from_browser(browser_cookies, "mouser.com")
 
         return True
 
@@ -111,7 +123,7 @@ class Mouser(Supplier):
             return True
 
         url = api_part.supplier_link
-        if not (result := scrape(url, fallback_domains=FALLBACK_DOMAINS)):
+        if not (result := self.scrape(url)):
             warning(f"failed to finalize part specifications from '{url}' (blocked)")
             return True
 
@@ -133,8 +145,3 @@ class Mouser(Supplier):
             return True
 
         return True
-
-FALLBACK_DOMAINS = (
-    "www2.mouser.com",
-    "eu.mouser.com",
-)

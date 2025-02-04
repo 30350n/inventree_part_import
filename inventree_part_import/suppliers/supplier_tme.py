@@ -13,8 +13,7 @@ from requests.exceptions import HTTPError, JSONDecodeError, Timeout
 from ..error_helper import *
 from ..localization import get_country, get_language
 from ..retries import retry_timeouts
-from .base import ApiPart, Supplier, SupplierSupportLevel
-from .scrape import REMOVE_HTML_TAGS
+from .base import REMOVE_HTML_TAGS, ApiPart, Supplier, SupplierSupportLevel
 
 class TME(Supplier):
     SUPPORT_LEVEL = SupplierSupportLevel.OFFICIAL_API

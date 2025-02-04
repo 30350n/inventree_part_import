@@ -1,24 +1,20 @@
 import re
-from types import MethodType
 
 from bs4 import BeautifulSoup
-from requests import Session
 from requests.compat import quote, urljoin
 
-from ..config import get_config
 from ..error_helper import *
 from ..localization import get_language
-from .base import ApiPart, Supplier, SupplierSupportLevel, money2float
-from .scrape import scrape
+from .base import ApiPart, ScrapeSupplier, SupplierSupportLevel, money2float
 
 BASE_URL = "https://reichelt.com/"
 LOCALE_CHANGE_URL = f"{BASE_URL}index.html?ACTION=12&PAGE=46"
 SEARCH_URL = f"{BASE_URL}index.html?ACTION=446&q={{}}"
 
-class Reichelt(Supplier):
+class Reichelt(ScrapeSupplier):
     SUPPORT_LEVEL = SupplierSupportLevel.SCRAPING
 
-    def setup(self, language, location, scraping, interactive_part_matches):
+    def setup(self, language, location, scraping, interactive_part_matches, browser_cookies=""):
         if location not in LOCATION_MAP:
             return self.load_error(f"unsupported location '{location}'")
 
@@ -36,6 +32,9 @@ class Reichelt(Supplier):
             rf";CCOUNTRY={LOCATION_MAP[self.location]};LANGUAGE={self.language};CTYPE=1;"
         )
 
+        if browser_cookies:
+            self.cookies_from_browser(browser_cookies, "reichelt.com")
+
         self.max_results = interactive_part_matches
 
         return True
@@ -43,12 +42,12 @@ class Reichelt(Supplier):
     def search(self, search_term):
         if SKU_REGEX.fullmatch(search_term):
             sku_link = f"{self.localized_url}-{search_term}.html"
-            if product_page := scrape(sku_link, setup_hook=self.setup_hook):
+            if product_page := self.scrape(sku_link):
                 product_page_soup = BeautifulSoup(product_page.content, "html.parser")
                 return [self.get_api_part(product_page_soup, search_term, sku_link)], 1
 
         search_safe = quote(search_term, safe="")
-        if not (result := scrape(SEARCH_URL.format(search_safe), setup_hook=self.setup_hook)):
+        if not (result := self.scrape(SEARCH_URL.format(search_safe))):
             return [], 0
 
         search_soup = BeautifulSoup(result.content, "html.parser")
@@ -60,7 +59,7 @@ class Reichelt(Supplier):
             sku = PRODUCT_URL_SKU_REGEX.match(product_url).group(1).upper()
 
             sku_link = f"{self.localized_url}-{sku.lower()}.html"
-            if not (product_page := scrape(sku_link, setup_hook=self.setup_hook)):
+            if not (product_page := self.scrape(sku_link)):
                 continue
 
             product_page_soup = BeautifulSoup(product_page.content, "html.parser")
@@ -147,14 +146,13 @@ class Reichelt(Supplier):
             currency=currency,
         )
 
-    def setup_hook(self, session: Session):
-        request_timeout = get_config()["request_timeout"]
-        form_page = session.get(LOCALE_CHANGE_URL, timeout=request_timeout)
+    def setup_hook(self):
+        form_page = self.session.get(LOCALE_CHANGE_URL, timeout=self.request_timeout)
         if form_page.status_code == 200:
             soup = BeautifulSoup(form_page.content, "html.parser")
             form_url = soup.find("form", attrs={"name": "contentform"}).attrs["action"]
 
-            result = session.post(form_url, timeout=request_timeout, data={
+            result = self.session.post(form_url, timeout=self.request_timeout, data={
                 "CCOUNTRY": LOCATION_MAP[self.location],
                 "LANGUAGE": self.language,
                 "CTYPE": 1,

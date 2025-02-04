@@ -1,31 +1,31 @@
 import re
 
-from requests import Session
-
-from ..config import get_config
-from ..error_helper import *
-from .base import ApiPart, Supplier, SupplierSupportLevel
-from .scrape import REMOVE_HTML_TAGS, scrape
+from ..error_helper import warning
+from .base import REMOVE_HTML_TAGS, ApiPart, ScrapeSupplier, SupplierSupportLevel
 
 API_BASE_URL = "https://wmsc.lcsc.com/ftps/wm/"
 CURRENCY_URL     = f"https://wmsc.lcsc.com/wmsc/home/currency?currencyCode={{}}"
 SEARCH_URL       = f"{API_BASE_URL}search/global?keyword={{}}"
 PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
-class LCSC(Supplier):
+class LCSC(ScrapeSupplier):
     SUPPORT_LEVEL = SupplierSupportLevel.INOFFICIAL_API
 
-    def setup(self, currency, ignore_duplicates=True):
+    def setup(self, currency, browser_cookies="", ignore_duplicates=True):
         if currency not in CURRENCY_MAP.values():
             return self.load_error(f"unsupported currency '{currency}'")
 
         self.currency = currency
         self.ignore_duplicates = ignore_duplicates
+
+        if browser_cookies:
+            self.cookies_from_browser(browser_cookies, "lcsc.com")
+
         return True
 
     def search(self, search_term):
         for _ in range(3):
-            search_result = scrape(SEARCH_URL.format(search_term), setup_hook=self.setup_hook)
+            search_result = self.scrape(SEARCH_URL.format(search_term))
             if search_result and (result := search_result.json().get("result")):
                 break
         else:
@@ -35,7 +35,7 @@ class LCSC(Supplier):
         if product_detail := result.get("tipProductDetailUrlVO"):
             url = PRODUCT_INFO_URL.format(product_detail["productCode"])
             for _ in range(3):
-                detail_request = scrape(url, setup_hook=self.setup_hook)
+                detail_request = self.scrape(url)
                 if detail_request and (detail_result := detail_request.json().get("result")):
                     return [self.get_api_part(detail_result)], 1
             warning("failed to retrieve product data from LCSC (internal API error)")
@@ -141,8 +141,8 @@ class LCSC(Supplier):
             currency=currency,
         )
 
-    def setup_hook(self, session: Session):
-        session.get(CURRENCY_URL.format(self.currency), timeout=get_config()["request_timeout"])
+    def setup_hook(self):
+        self.session.get(CURRENCY_URL.format(self.currency), timeout=self.request_timeout)
 
 CLEANUP_URL_ID_REGEX = re.compile(r"[^\w\d\.]")
 def cleanup_url_id(url):
