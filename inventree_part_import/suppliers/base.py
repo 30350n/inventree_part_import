@@ -164,7 +164,8 @@ class ScrapeSupplier(Supplier):
         self.session = Session()
         self.session.cookies.update(self.cookies)
         self.session.headers.update({
-            "User-Agent": UserAgent().random,
+            # using iOS User-Agents seems to help to with mouser crawling
+            "User-Agent": UserAgent(os=["iOS"]).random,
             "Accept-Language": "en-US,en",
         })
 
