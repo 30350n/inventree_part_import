@@ -42,13 +42,14 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 exclude = [
-    ".git",
+    ".git/",
     ".github/",
     ".gitignore",
     ".gitmodules",
     ".pre-commit-config.yaml",
     "tests/",
     "tasks.py",
+    "shell.nix",
 ]
 
 [project.optional-dependencies]
