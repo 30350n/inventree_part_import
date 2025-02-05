@@ -145,16 +145,19 @@ class ScrapeSupplier(Supplier):
                     if result.status_code == 200:
                         return result
 
-    def cookies_from_browser(self, browser_name: str, domain_name: str):
-        if (browser := getattr(browser_cookie3, browser_name)) not in browser_cookie3.all_browsers:
+    def cookies_from_browser(self, name: str, domain_name: str):
+        all_browsers = browser_cookie3.all_browsers
+        if not (browser := getattr(browser_cookie3, name, None)) or browser not in all_browsers:
             warning(
-                f"failed to load cookies from browser '{browser_name}' "
-                f"([{', '.join(browser.__name__ for browser in browser_cookie3.all_browsers)}])"
+                f"failed to load cookies from browser '{name}' (not in "
+                f"[{', '.join(browser.__name__ for browser in browser_cookie3.all_browsers)}])"
             )
+            return
 
         if not (cookies := browser(domain_name=domain_name)):
-            warning(f"browser '{browser_name}' has no cookies set for '{domain_name}'")
-        
+            warning(f"browser '{name}' has no cookies set for '{domain_name}'")
+            return
+
         self.cookies = cookies
 
     def setup_hook(self):
