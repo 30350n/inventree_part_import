@@ -109,16 +109,9 @@ class ScrapeSupplier(Supplier):
     extra_headers = {}
     fallback_domains = [None]
 
-    request_timeout = 0.0
-    retry_timeout = 0.0
-
     def scrape(self, url) -> Response | None:
         if not hasattr(self, "session"):
             self._setup_session()
-
-        if config := get_config():
-            self.request_timeout = config["request_timeout"]
-            self.retry_timeout = config["retry_timeout"]
 
         for retry in retry_timeouts():
             with retry:
@@ -175,6 +168,14 @@ class ScrapeSupplier(Supplier):
         for retry in retry_timeouts():
             with retry:
                 self.setup_hook()
+
+    @property
+    def request_timeout(self) -> float:
+        return config["request_timeout"] if (config := get_config()) else 5.0
+
+    @property
+    def retry_timeout(self) -> float:
+        return config["request_timeout"] if (config := get_config()) else 0.0
 
 DOMAIN_REGEX = re.compile(r"(https?://)(?:[^./]*\.?)*/")
 DOMAIN_SUB = "\\g<1>{}/"
