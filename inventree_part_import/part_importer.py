@@ -217,7 +217,7 @@ class PartImporter:
 
         self.setup_price_breaks(supplier_part, api_part)
 
-        url = self.api.base_url + supplier_part.url[1:]
+        url = f"{self.api.base_url}supplier-part/{supplier_part.pk}/"
         success(f"{action_str} {supplier.name} part {supplier_part.SKU} ({url})")
         return import_result
 
