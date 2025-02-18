@@ -102,6 +102,7 @@ class DigiKey(Supplier):
         }
 
         return ApiPart(
+            name=digikey_part.manufacturer_part_number,
             description=digikey_part.product_description,
             image_url=digikey_part.primary_photo,
             datasheet_url=digikey_part.primary_datasheet,
@@ -115,5 +116,5 @@ class DigiKey(Supplier):
             category_path=category_path,
             parameters=parameters,
             price_breaks=price_breaks,
-            currency=self.currency,
+            currency=self.currency
         )
