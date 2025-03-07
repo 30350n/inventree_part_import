@@ -73,8 +73,9 @@ class TME(Supplier):
         return list(map(self.get_api_part, filtered_matches, tme_stocks)), len(filtered_matches)
 
     def get_api_part(self, tme_part, tme_stock):
+        to_net_price = 1 if tme_stock["PriceType"] == "NET" else 100 / (100 + tme_stock["VatRate"])
         price_breaks = {
-            price_break["Amount"]: price_break["PriceValue"]
+            price_break["Amount"]: price_break["PriceValue"] * to_net_price
             for price_break in tme_stock.get("PriceList", [])
         }
 
@@ -145,16 +146,13 @@ def limit_frequency(seconds):
 class TMEApi:
     BASE_URL = "https://api.tme.eu/"
 
-    def __init__(
-        self, token, secret, language="EN", country="PL", currency="EUR", net_prices=True,
-    ):
+    def __init__(self, token, secret, language="EN", country="PL", currency="EUR"):
         self._categories = None
         self.token = token
         self.secret = secret
         self.language = language
         self.country = country
         self.currency = currency
-        self.net_prices = net_prices
 
     def get_category_path(self, category_id):
         if self._categories is None:
@@ -205,7 +203,6 @@ class TMEApi:
             "Country": self.country,
             "Language": self.language,
             "Currency": self.currency,
-            "GrossPrices": str(not self.net_prices).lower(),
         }
         for i, symbol in enumerate(product_symbols[:10]):
             data[f"SymbolList[{i}]"] = symbol
@@ -213,7 +210,6 @@ class TMEApi:
         if result := self._api_call("Products/GetPricesAndStocks", data):
             result_data = result.json()["Data"]
             assert result_data["Currency"] == self.currency
-            assert result_data["PriceType"] == ("NET" if self.net_prices else "GROSS")
             return result_data["ProductList"]
         return []
 
