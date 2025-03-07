@@ -45,7 +45,7 @@ class ApiPart:
     def get_part_data(self):
         return {
             "name": self.MPN,
-            "description": self.description,
+            "description": self.description[:250],
             "link": self.manufacturer_link[:200],
             "active": True,
             "component": True,
@@ -55,15 +55,15 @@ class ApiPart:
     def get_manufacturer_part_data(self):
         return {
             "MPN": self.MPN,
-            "description": self.description,
+            "description": self.description[:250],
             "link": self.manufacturer_link[:200],
         }
 
     def get_supplier_part_data(self):
         data = {
-            "description": self.description,
+            "description": self.description[:250],
             "link": self.supplier_link[:200],
-            "packaging": self.packaging,
+            "packaging": self.packaging[:50],
         }
         if self.quantity_available:
             data["available"] = min(float(self.quantity_available), 9999999.0)
