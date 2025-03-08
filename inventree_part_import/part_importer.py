@@ -52,7 +52,8 @@ class PartImporter:
             search_term,
             existing_part: Part = None,
             supplier_id=None,
-            only_supplier=False
+            only_supplier=False,
+            overwrite_part_name=None
         ):
         info(f"searching for {search_term} ...", end="\n")
         import_result = ImportResult.SUCCESS
@@ -69,6 +70,8 @@ class PartImporter:
 
             if len(results) == 1:
                 api_part = results[0]
+                if overwrite_part_name is not None:
+                    api_part.name = overwrite_part_name
             elif self.interactive:
                 prompt(f"found multiple parts at {supplier.name}, select which one to import")
                 results = results[:get_config()["interactive_part_matches"]]
@@ -177,7 +180,7 @@ class PartImporter:
             if update_part:
                 if not api_part.finalize():
                     return ImportResult.FAILURE
-                update_object_data(part, api_part.get_part_data(), f"part {api_part.MPN}")
+                update_object_data(part, api_part.get_part_data(), f"part {api_part.name}")
 
             if not part.image and api_part.image_url:
                 upload_image(part, api_part.image_url)
@@ -227,8 +230,8 @@ class PartImporter:
         part: Part = None,
     ) -> tuple[ManufacturerPart, Part]:
         part_data = api_part.get_part_data()
-        if part or (part := get_part(self.api, api_part.MPN)):
-            update_object_data(part, part_data, f"part {api_part.MPN}")
+        if part or (part := get_part(self.api, api_part.name)):
+            update_object_data(part, part_data, f"part {api_part.name}")
         else:
             for subcategory in reversed(api_part.category_path):
                 if category := self.category_map.get(subcategory.lower()):
@@ -246,7 +249,7 @@ class PartImporter:
                 category.add_alias(api_part.category_path[-1])
                 self.category_map[api_part.category_path[-1].lower()] = category
 
-            info(f"creating part {api_part.MPN} in '{category.part_category.pathstring}' ...")
+            info(f"creating part {api_part.name} in '{category.part_category.pathstring}' ...")
             part = Part.create(self.api, {"category": category.part_category.pk, **part_data})
 
         manufacturer = create_manufacturer(self.api, api_part.manufacturer)

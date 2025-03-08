@@ -130,6 +130,7 @@ class Reichelt(ScrapeSupplier):
             currency = meta["content"]
 
         return ApiPart(
+            name=mpn,
             description=description,
             image_url=image_url,
             datasheet_url=datasheet_url,
