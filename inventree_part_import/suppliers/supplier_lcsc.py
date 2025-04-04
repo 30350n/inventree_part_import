@@ -72,6 +72,7 @@ class LCSC(ScrapeSupplier):
         if not (description := lcsc_part.get("productDescEn")):
             description = lcsc_part.get("productIntroEn")
         description = description.strip() if description else ""
+        description = (description[:247] + '..') if len(description) > 250 else description
 
         image_url = lcsc_part.get("productImageUrlBig", lcsc_part.get("productImageUrl"))
         if not image_url and (image_urls := lcsc_part.get("productImages")):
